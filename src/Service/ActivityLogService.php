@@ -39,8 +39,12 @@ class ActivityLogService
             $log->setIpAddress($request->getClientIp());
         }
 
-        $this->em->persist($log);
-        $this->em->flush();
+        try {
+            $this->em->persist($log);
+            $this->em->flush();
+        } catch (\Throwable) {
+            // Never break login or other flows when audit logging fails (e.g. missing table or DB down).
+        }
     }
 
     public function logLogin(User $user): void

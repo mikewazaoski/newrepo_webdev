@@ -19,9 +19,12 @@ if [ -z "${APP_SECRET:-}" ]; then
     echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
 fi
 
-# Production cache & assets
-php bin/console cache:clear --env="${APP_ENV:-prod}" --no-warmup 2>/dev/null || true
-php bin/console cache:warmup --env="${APP_ENV:-prod}" 2>/dev/null || true
+# Production cache & assets (must succeed or Symfony returns 500 on every page)
+php bin/console cache:clear --env="${APP_ENV:-prod}" --no-warmup
+if ! php bin/console cache:warmup --env="${APP_ENV:-prod}"; then
+    echo "ERROR: Symfony cache warmup failed. Check deploy logs for missing env vars (DEFAULT_URI, APP_SECRET, DATABASE_URL)."
+    exit 1
+fi
 php bin/console assets:install public --env="${APP_ENV:-prod}" --no-interaction 2>/dev/null || true
 
 # Run migrations when database is configured (Railway MySQL or Docker mysql service)
@@ -32,17 +35,36 @@ if [ -n "${DATABASE_URL:-}" ]; then
         php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}" || \
             echo "WARNING: Migrations failed — app will still start."
     else
-        echo "WARNING: Cannot connect to database — app will start without migrations."
-        echo "  Railway: add MySQL service, then set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service."
+        echo "ERROR: Cannot connect to database."
+        echo "  Railway: add MySQL, set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service (remove 127.0.0.1 / @mysql: URLs)."
         echo "  Docker:  DATABASE_URL=mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4"
-        echo "  Remove any DATABASE_URL pointing to 127.0.0.1 or localhost on Railway."
+        if [ -n "${RAILWAY_ENVIRONMENT:-}${RAILWAY_PROJECT_ID:-}" ]; then
+            exit 1
+        fi
     fi
 else
     echo "WARNING: No DATABASE_URL / MYSQL_URL — skipping migrations."
+    if [ -n "${RAILWAY_ENVIRONMENT:-}${RAILWAY_PROJECT_ID:-}" ]; then
+        echo "ERROR: Railway deploy requires a valid DATABASE_URL (use \${{MySQL.MYSQL_URL}}, not 127.0.0.1 or @mysql:)."
+        exit 1
+    fi
 fi
 
-mkdir -p var/cache var/log public/uploads/images
+mkdir -p var/cache var/log var/sessions public/uploads/images
 chown -R www-data:www-data var public/uploads 2>/dev/null || true
+
+# Optional: seed first admin on Railway (set ADMIN_EMAIL, ADMIN_PASSWORD, etc. in Variables)
+if [ -n "${DATABASE_URL:-}" ] && [ -n "${ADMIN_EMAIL:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
+    echo "Ensuring admin user exists..."
+    php bin/console app:create-admin \
+        --env="${APP_ENV:-prod}" \
+        --no-interaction \
+        --email="${ADMIN_EMAIL}" \
+        --username="${ADMIN_USERNAME:-admin}" \
+        --name="${ADMIN_NAME:-Administrator}" \
+        --password="${ADMIN_PASSWORD}" \
+        2>/dev/null || true
+fi
 
 php-fpm -D
 exec nginx -g 'daemon off;'

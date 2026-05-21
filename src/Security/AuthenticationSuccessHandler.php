@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -18,13 +19,19 @@ class AuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterf
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): RedirectResponse
     {
         $user = $token->getUser();
-        
-        // Redirect admins to admin dashboard, others to regular dashboard
+        if (!$user instanceof User) {
+            return new RedirectResponse($this->urlGenerator->generate('app_home'));
+        }
+
         if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return new RedirectResponse($this->urlGenerator->generate('app_admin_dashboard'));
         }
-        
-        return new RedirectResponse($this->urlGenerator->generate('app_staff_home'));
+
+        if (in_array('ROLE_STAFF', $user->getRoles(), true)) {
+            return new RedirectResponse($this->urlGenerator->generate('app_staff_home'));
+        }
+
+        return new RedirectResponse($this->urlGenerator->generate('app_home'));
     }
 }
 

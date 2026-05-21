@@ -14,11 +14,20 @@ class AuthenticationController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        if ($this->getUser()) {
-            // Redirect based on user role
+        try {
+            $currentUser = $this->getUser();
+        } catch (\Throwable) {
+            $currentUser = null;
+        }
+
+        if ($currentUser) {
             if ($this->isGranted('ROLE_ADMIN')) {
                 return $this->redirectToRoute('app_admin_dashboard');
             }
+            if ($this->isGranted('ROLE_STAFF')) {
+                return $this->redirectToRoute('app_staff_home');
+            }
+
             return $this->redirectToRoute('app_home');
         }
 

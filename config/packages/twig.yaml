@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        google_client_id: '%google_client_id%'
 
 when@test:
     twig:
