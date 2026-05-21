@@ -28,18 +28,22 @@ First build may take **10–20 minutes**. Later starts are much faster.
 
 ### `localhost/login` shows Apache 404?
 
-That URL uses **port 80** (XAMPP/WAMP on Windows), not Docker. The Pet Pantry container listens on **port 8080**.
+**Port 80** is XAMPP Apache; the app runs in Docker on **port 8080**.
 
-- **Use:** http://localhost:8080/login  
-- **Or** stop XAMPP Apache and run with port 80:
+**Quick fix (no XAMPP change):** http://localhost:8080/login
 
-```bash
-docker compose -f docker-compose.yaml -f docker-compose.port80.yaml up -d
-```
+**Fix `http://localhost/login` (recommended on Windows + XAMPP):**
 
-Then open http://localhost/login
+1. Start Docker: `docker compose up -d`
+2. **Run PowerShell as Administrator:**
+   ```powershell
+   cd D:\Desktop\pantry\pets
+   .\scripts\install-xampp-proxy.ps1
+   ```
+3. In **XAMPP Control Panel** → **Stop** Apache → **Start** Apache
+4. Open http://localhost/login
 
-- **Or** keep XAMPP on port 80 and proxy to Docker — see `docker/xampp-proxy-docker.conf`
+This proxies XAMPP (port 80) to Docker (port 8080).
 
 ### Database credentials (Docker)
 

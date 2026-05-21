@@ -1,8 +1,7 @@
 framework:
     router:
-        # Configure how to generate URLs in non-HTTP contexts, such as CLI commands.
-        # See https://symfony.com/doc/current/routing.html#generating-urls-in-commands
-        #default_uri: http://localhost
+        # Used for CLI and absolute URL generation (Docker: DEFAULT_URI=http://localhost)
+        default_uri: '%env(DEFAULT_URI)%'
 
 when@prod:
     framework:

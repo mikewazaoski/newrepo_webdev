@@ -12,7 +12,7 @@ services:
       APP_DEBUG: "0"
       APP_SECRET: ${APP_SECRET:-pet_pantry_docker_change_this_secret_32chars}
       DATABASE_URL: mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4
-      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8080}
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost}
       TRUSTED_PROXIES: REMOTE_ADDR
       PORT: "8080"
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
