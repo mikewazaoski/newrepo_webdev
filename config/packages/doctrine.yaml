@@ -37,9 +37,10 @@ when@prod:
     doctrine:
         dbal:
             server_version: '8.0'
-            # Railway: public proxy needs SSL (verify off); private .railway.internal uses ssl-mode=DISABLED in DATABASE_URL
+            # Railway MySQL public proxy: SSL on (1010), skip cert verify (1014)
             options:
-                !php/const PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT: false
+                1010: true
+                1014: false
         orm:
             auto_generate_proxy_classes: false
             proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'

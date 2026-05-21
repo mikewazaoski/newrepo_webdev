@@ -83,7 +83,7 @@ function normalizeDatabaseUrl(string $url): string
 
     $host = $parts['host'] ?? '';
     if (is_string($host) && str_ends_with($host, '.railway.internal')) {
-        $query['ssl-mode'] = 'DISABLED';
+        unset($query['ssl-mode']);
     }
 
     $parts['query'] = http_build_query($query);
@@ -196,11 +196,11 @@ writeRequired($lines, 'APP_DEBUG', $appDebug);
 writeRequired($lines, 'APP_SECRET', $appSecret);
 writeRequired($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
 writeRequired($lines, 'DEFAULT_URI', $defaultUri);
-$messengerDsn = env('MESSENGER_TRANSPORT_DSN');
-if ($messengerDsn === null && (env('RAILWAY_ENVIRONMENT') !== null || env('RAILWAY_PROJECT_ID') !== null)) {
-    $messengerDsn = 'sync://';
-}
-writeRequired($lines, 'MESSENGER_TRANSPORT_DSN', $messengerDsn ?? 'doctrine://default?auto_setup=0');
+$onRailway = env('RAILWAY_ENVIRONMENT') !== null
+    || env('RAILWAY_PROJECT_ID') !== null
+    || env('RAILWAY_PUBLIC_DOMAIN') !== null;
+$messengerDsn = env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0');
+writeRequired($lines, 'MESSENGER_TRANSPORT_DSN', $messengerDsn ?? 'sync://');
 writeRequired($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
 writeRequired($lines, 'CORS_ALLOW_ORIGIN', $corsOrigin);
 writeRequired($lines, 'GOOGLE_CLIENT_ID', $googleClientId);

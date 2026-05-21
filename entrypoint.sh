@@ -20,49 +20,49 @@ if [ -n "${DATABASE_URL:-}" ]; then
     DB_HOST=$(php -r 'echo parse_url(getenv("DATABASE_URL"), PHP_URL_HOST) ?: "unknown";')
     echo "Database target host: ${DB_HOST}"
 else
-    echo "WARNING: DATABASE_URL is empty after railway-env.php"
+    echo "WARNING: DATABASE_URL is empty — set DATABASE_URL=\${{MySQL.MYSQL_URL}} on Railway."
 fi
 
 if [ -z "${APP_SECRET:-}" ]; then
-    echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
+    echo "WARNING: APP_SECRET is not set."
 fi
 
 mkdir -p var/cache var/log var/sessions public/uploads/images
 chown -R www-data:www-data var public/uploads 2>/dev/null || true
 
-php-fpm -D
+# Warm cache BEFORE nginx — background warmup caused HTTP 500 on all PHP routes
+echo "Warming Symfony cache..."
+php bin/console cache:clear --env="${APP_ENV:-prod}" --no-warmup
+php bin/console cache:warmup --env="${APP_ENV:-prod}"
+php bin/console assets:install public --env="${APP_ENV:-prod}" --no-interaction 2>/dev/null || true
 
-# Symfony setup in background — nginx serves static /health immediately for Railway healthcheck
-(
-    echo "Running Symfony cache warmup and migrations..."
-    php bin/console cache:clear --env="${APP_ENV:-prod}" --no-warmup || exit 1
-    php bin/console cache:warmup --env="${APP_ENV:-prod}" || exit 1
-    php bin/console assets:install public --env="${APP_ENV:-prod}" --no-interaction 2>/dev/null || true
-
-    if [ -n "${DATABASE_URL:-}" ]; then
-        if php bin/console doctrine:query:sql "SELECT 1" --env="${APP_ENV:-prod}" --quiet 2>/dev/null; then
-            echo "Running database migrations..."
-            php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}" || \
-                echo "WARNING: Migrations failed."
+if [ -n "${DATABASE_URL:-}" ]; then
+    echo "Checking database connection..."
+    if php bin/console doctrine:query:sql "SELECT 1" --env="${APP_ENV:-prod}" 2>&1; then
+        echo "Running database migrations..."
+        php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}" || \
+            echo "WARNING: Migrations failed."
+        su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null || {
             chmod 644 .env 2>/dev/null || true
             chown www-data:www-data .env 2>/dev/null || true
-        else
-            echo "WARNING: Cannot connect to database. Set DATABASE_URL=\${{MySQL.MYSQL_URL}} on Railway."
-        fi
+        }
+    else
+        echo "WARNING: Database connection failed. Login will not work until DATABASE_URL=\${{MySQL.MYSQL_URL}} is set."
     fi
+fi
 
-    if [ -n "${DATABASE_URL:-}" ] && [ -n "${ADMIN_EMAIL:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
-        php bin/console app:create-admin \
-            --env="${APP_ENV:-prod}" \
-            --no-interaction \
-            --email="${ADMIN_EMAIL}" \
-            --username="${ADMIN_USERNAME:-admin}" \
-            --name="${ADMIN_NAME:-Administrator}" \
-            --password="${ADMIN_PASSWORD}" \
-            2>/dev/null || true
-    fi
-    echo "Symfony setup complete."
-) &
+if [ -n "${DATABASE_URL:-}" ] && [ -n "${ADMIN_EMAIL:-}" ] && [ -n "${ADMIN_PASSWORD:-}" ]; then
+    echo "Ensuring admin user exists..."
+    php bin/console app:create-admin \
+        --env="${APP_ENV:-prod}" \
+        --no-interaction \
+        --email="${ADMIN_EMAIL}" \
+        --username="${ADMIN_USERNAME:-admin}" \
+        --name="${ADMIN_NAME:-Administrator}" \
+        --password="${ADMIN_PASSWORD}" \
+        2>/dev/null || true
+fi
 
-echo "Nginx listening on port ${PORT} (GET /health for Railway healthcheck)..."
+php-fpm -D
+echo "Ready: static GET /health + Symfony on port ${PORT}"
 exec nginx -g 'daemon off;'
