@@ -17,8 +17,8 @@ eval "$(php bin/railway-env.php --shell)"
 # PHP-FPM receives env via docker/php-fpm/zz-railway.conf ($DATABASE_URL, etc.)
 
 mkdir -p var/cache var/log public/uploads/images /tmp/petpantry-sessions
-chmod 644 .env 2>/dev/null || true
-chown -R www-data:www-data var public/uploads .env /tmp/petpantry-sessions 2>/dev/null || true
+chmod 644 .env .env.local.php 2>/dev/null || true
+chown -R www-data:www-data var public/uploads .env .env.local.php /tmp/petpantry-sessions 2>/dev/null || true
 chmod -R 775 var /tmp/petpantry-sessions 2>/dev/null || true
 
 if [ -z "${APP_SECRET:-}" ]; then
@@ -29,6 +29,12 @@ if [ -n "${DATABASE_URL:-}" ]; then
     echo "Database target host: $(php -r 'echo parse_url(getenv("DATABASE_URL"), PHP_URL_HOST) ?: "unknown";')"
 else
     echo "WARNING: DATABASE_URL is empty — add MySQL and set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service."
+fi
+
+if [ -n "${MYSQLHOST:-}" ]; then
+    echo "MySQL linked via MYSQLHOST=${MYSQLHOST}"
+else
+    echo "WARNING: MYSQLHOST is not set — link MySQL to this app service in Railway."
 fi
 
 # Symfony cache + DB must finish before PHP-FPM serves requests (otherwise registration hits a dead DB)

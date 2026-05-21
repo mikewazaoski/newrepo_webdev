@@ -43,7 +43,18 @@ function resolveDatabaseUrlFromMysqlVars(): ?string
 
 function resolveDatabaseUrl(): ?string
 {
-    // Private URL first — same Railway project, no public SSL proxy
+    $onRailway = env('RAILWAY_ENVIRONMENT') !== null
+        || env('RAILWAY_PROJECT_ID') !== null
+        || env('RAILWAY_PUBLIC_DOMAIN') !== null;
+
+    // On Railway, linked MySQL injects MYSQLHOST — most reliable private-network URL
+    if ($onRailway) {
+        $fromMysqlVars = resolveDatabaseUrlFromMysqlVars();
+        if ($fromMysqlVars !== null) {
+            return $fromMysqlVars;
+        }
+    }
+
     foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
         $url = env($name);
         if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
@@ -227,6 +238,16 @@ foreach ($resolvedEnv as $key => $value) {
 
 file_put_contents($envPath, implode("\n", $lines)."\n");
 
+$envLocalPhpPath = $projectDir.'/.env.local.php';
+$phpEnv = $resolvedEnv;
+if (isset($phpEnv['APP_DEBUG'])) {
+    $phpEnv['APP_DEBUG'] = (int) $phpEnv['APP_DEBUG'];
+}
+file_put_contents(
+    $envLocalPhpPath,
+    "<?php\n\nreturn ".var_export($phpEnv, true).";\n"
+);
+
 $exportKeys = [
     'APP_ENV', 'APP_DEBUG', 'APP_SECRET', 'TRUSTED_PROXIES', 'DEFAULT_URI',
     'DATABASE_URL', 'MESSENGER_TRANSPORT_DSN', 'MAILER_DSN', 'CORS_ALLOW_ORIGIN',
@@ -234,6 +255,16 @@ $exportKeys = [
 ];
 
 if (in_array('--shell', $argv, true)) {
+    $rawDatabaseUrl = getenv('DATABASE_URL');
+    if (
+        is_string($rawDatabaseUrl)
+        && $rawDatabaseUrl !== ''
+        && isLocalDockerDatabaseUrl($rawDatabaseUrl)
+        && !isset($resolvedEnv['DATABASE_URL'])
+    ) {
+        echo "unset DATABASE_URL\n";
+    }
+
     foreach ($exportKeys as $key) {
         $value = $resolvedEnv[$key] ?? null;
         if ($value !== null) {

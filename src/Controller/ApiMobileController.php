@@ -28,6 +28,24 @@ class ApiMobileController extends AbstractController
     #[Route('/api/mobile/health', name: 'api_mobile_health', methods: ['GET'])]
     public function health(): JsonResponse
     {
+        $dbUrl = $_ENV['DATABASE_URL'] ?? $_SERVER['DATABASE_URL'] ?? getenv('DATABASE_URL');
+        $dbUrl = is_string($dbUrl) ? $dbUrl : '';
+        $diagnostics = [
+            'database_url_set' => $dbUrl !== '',
+            'database_host' => $dbUrl !== '' ? (parse_url($dbUrl, PHP_URL_HOST) ?: 'unknown') : null,
+            'env_local_php' => is_file($this->getParameter('kernel.project_dir').'/.env.local.php'),
+        ];
+
+        if ($dbUrl === '') {
+            return new JsonResponse([
+                'status' => 'error',
+                'database' => 'disconnected',
+                'message' => 'DATABASE_URL is not configured',
+                'hint' => 'In Railway: add MySQL, then on the app service set DATABASE_URL=${{MySQL.MYSQL_URL}} and redeploy.',
+                'diagnostics' => $diagnostics,
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
         try {
             $this->entityManager->getConnection()->executeQuery('SELECT 1');
             $productCount = $this->productRepository->count([]);
@@ -48,6 +66,9 @@ class ApiMobileController extends AbstractController
                 'status' => 'error',
                 'database' => 'disconnected',
                 'message' => 'Database connection failed',
+                'hint' => 'Check Railway deploy logs for "Database OK". Ensure MySQL is in the same project and DATABASE_URL=${{MySQL.MYSQL_URL}} is on the app service.',
+                'error' => $e->getMessage(),
+                'diagnostics' => $diagnostics,
             ], Response::HTTP_SERVICE_UNAVAILABLE);
         }
     }

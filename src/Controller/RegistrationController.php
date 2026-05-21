@@ -21,9 +21,26 @@ class RegistrationController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $entityManager,
-        EmailVerificationService $emailVerificationService  // ADDED
+        EmailVerificationService $emailVerificationService
     ): Response {
+        try {
+            return $this->handleRegister($request, $userPasswordHasher, $entityManager, $emailVerificationService);
+        } catch (\Throwable $e) {
+            return $this->render('registration/register.html.twig', [
+                'registrationForm' => $this->createForm(RegistrationFormType::class, new User()),
+                'registrationError' => $this->isDatabaseConnectionFailure($e)
+                    ? 'Account creation failed: the app cannot reach the database. In Railway, add MySQL and set DATABASE_URL to ${{MySQL.MYSQL_URL}} on the app service, then redeploy.'
+                    : 'Registration failed. Please try again.',
+            ]);
+        }
+    }
 
+    private function handleRegister(
+        Request $request,
+        UserPasswordHasherInterface $userPasswordHasher,
+        EntityManagerInterface $entityManager,
+        EmailVerificationService $emailVerificationService
+    ): Response {
         $user = new User();
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
