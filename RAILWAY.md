@@ -54,10 +54,10 @@ Do **not** copy the raw URL by hand unless necessary — references stay in sync
 
 | Symptom | Fix |
 |---------|-----|
+| Deploy crashes / `exit 1` on database | **Add MySQL** to the project. On the app service, set `DATABASE_URL` = `${{MySQL.MYSQL_URL}}`. **Delete** any `DATABASE_URL` with `127.0.0.1`, `localhost`, or `@mysql:` (Docker-only). |
 | `Unable to read "/app/.env"` | Redeploy latest image (entrypoint creates `.env` at startup). |
-| `Cannot connect to database` | Set `DATABASE_URL=${{MySQL.MYSQL_URL}}` on the **app** service; confirm MySQL service name. |
 | Migrations fail | Check deploy logs; ensure MySQL and app are in the **same Railway project**. |
-| 502 / app not listening | Networking → target port **8080**. |
+| 502 / app not listening | Railway sets `PORT` automatically — do not hardcode Docker port 8080 in variables. |
 
 ## Optional: persistent uploads
 

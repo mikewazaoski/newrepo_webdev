@@ -48,6 +48,16 @@ function resolveDatabaseUrl(): ?string
     );
 }
 
+function isLocalDockerDatabaseUrl(string $url): bool
+{
+    $host = parse_url($url, PHP_URL_HOST);
+    if ($host === false || $host === null || $host === '') {
+        return false;
+    }
+
+    return in_array(strtolower($host), ['127.0.0.1', 'localhost', 'mysql'], true);
+}
+
 function normalizeDatabaseUrl(string $url): string
 {
     $parts = parse_url($url);
@@ -113,6 +123,14 @@ writeLine($lines, 'GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID'));
 writeLine($lines, 'GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET'));
 
 $databaseUrl = resolveDatabaseUrl();
+if ($databaseUrl !== null && isLocalDockerDatabaseUrl($databaseUrl)) {
+    fwrite(STDERR, "railway-env: WARNING — DATABASE_URL uses a local/Docker host ({$databaseUrl}).\n");
+    fwrite(STDERR, "  On Railway: delete DATABASE_URL and set DATABASE_URL=\${{MySQL.MYSQL_URL}} after adding MySQL.\n");
+    $databaseUrl = null;
+    putenv('DATABASE_URL');
+    unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
+}
+
 if ($databaseUrl !== null) {
     $databaseUrl = normalizeDatabaseUrl($databaseUrl);
     putenv('DATABASE_URL='.$databaseUrl);
