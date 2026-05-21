@@ -23,12 +23,13 @@ First build takes 10–20 minutes. Later starts are fast.
 
 ## URLs
 
-Docker maps **host port 8080** → **container port 80** (`8080:80`).
+Docker maps **80:80** and **8080:80** (container nginx on port 80).
 
 | What | URL |
 |------|-----|
-| **Home** | http://localhost:8080 |
-| **Login** | http://localhost:8080/login |
+| **Home** | http://localhost |
+| **Login** | http://localhost/login |
+| **Also** | http://localhost:8080/login |
 | **phpMyAdmin** (optional) | http://localhost:8081 |
 | **MySQL** (from your PC) | `127.0.0.1:3307` |
 
