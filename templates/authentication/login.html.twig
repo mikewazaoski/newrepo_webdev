@@ -273,6 +273,13 @@
             </div>
         {% endfor %}
 
+        {% if loginError is defined and loginError %}
+            <div class="error-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ loginError }}
+            </div>
+        {% endif %}
+
         {% if error %}
             <div class="error-alert">
                 <i class="fas fa-exclamation-triangle"></i>

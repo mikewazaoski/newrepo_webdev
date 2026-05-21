@@ -47,12 +47,28 @@ function resolveDatabaseUrl(): ?string
         || env('RAILWAY_PROJECT_ID') !== null
         || env('RAILWAY_PUBLIC_DOMAIN') !== null;
 
-    // On Railway, linked MySQL injects MYSQLHOST — most reliable private-network URL
     if ($onRailway) {
+        foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL'] as $name) {
+            $url = env($name);
+            if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
+                return $url;
+            }
+            if ($url !== null && isLocalDockerDatabaseUrl($url)) {
+                fwrite(STDERR, "railway-env: ignoring {$name} with Docker-only host; trying other sources.\n");
+            }
+        }
+
         $fromMysqlVars = resolveDatabaseUrlFromMysqlVars();
         if ($fromMysqlVars !== null) {
             return $fromMysqlVars;
         }
+
+        $publicUrl = env('MYSQL_PUBLIC_URL');
+        if ($publicUrl !== null && !isLocalDockerDatabaseUrl($publicUrl)) {
+            return $publicUrl;
+        }
+
+        return null;
     }
 
     foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
@@ -93,12 +109,10 @@ function normalizeDatabaseUrl(string $url): string
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
 
     $host = $parts['host'] ?? '';
-    if (is_string($host) && str_ends_with($host, '.railway.internal')) {
-        // Private Railway network — SSL is not used on .railway.internal
-        $query['ssl-mode'] = 'DISABLED';
-    } elseif (
+    if (
         is_string($host)
         && $host !== ''
+        && !str_ends_with($host, '.railway.internal')
         && (str_contains($host, 'railway') || str_contains($host, 'rlwy.net'))
         && !isset($query['ssl-mode'])
     ) {
@@ -256,12 +270,7 @@ $exportKeys = [
 
 if (in_array('--shell', $argv, true)) {
     $rawDatabaseUrl = getenv('DATABASE_URL');
-    if (
-        is_string($rawDatabaseUrl)
-        && $rawDatabaseUrl !== ''
-        && isLocalDockerDatabaseUrl($rawDatabaseUrl)
-        && !isset($resolvedEnv['DATABASE_URL'])
-    ) {
+    if (is_string($rawDatabaseUrl) && $rawDatabaseUrl !== '' && isLocalDockerDatabaseUrl($rawDatabaseUrl)) {
         echo "unset DATABASE_URL\n";
     }
 

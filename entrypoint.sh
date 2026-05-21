@@ -14,7 +14,7 @@ cd /app
 # Resolve MYSQL_URL / MYSQLHOST → DATABASE_URL and write /app/.env for Symfony + PHP-FPM
 php bin/railway-env.php
 eval "$(php bin/railway-env.php --shell)"
-# PHP-FPM receives env via docker/php-fpm/zz-railway.conf ($DATABASE_URL, etc.)
+# Symfony reads /app/.env.local.php; PHP-FPM keeps container env via clear_env=no
 
 mkdir -p var/cache var/log public/uploads/images /tmp/petpantry-sessions
 chmod 644 .env .env.local.php 2>/dev/null || true

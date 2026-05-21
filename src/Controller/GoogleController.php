@@ -16,8 +16,14 @@ class GoogleController extends AbstractController
     }
 
     #[Route('/connect/google', name: 'connect_google_start')]
-    public function connect(): RedirectResponse
+    public function connect(): Response
     {
+        if (!$this->isGoogleOAuthConfigured()) {
+            $this->addFlash('error', 'Google sign-in is not configured on this server yet.');
+
+            return $this->redirectToRoute('app_login');
+        }
+
         return $this->clientRegistry->getClient('google')->redirect();
     }
 
@@ -25,5 +31,14 @@ class GoogleController extends AbstractController
     public function connectCheck(): Response
     {
         throw new \LogicException('Google authentication is handled by GoogleAuthenticator.');
+    }
+
+    private function isGoogleOAuthConfigured(): bool
+    {
+        $clientId = $_ENV['GOOGLE_CLIENT_ID'] ?? $_SERVER['GOOGLE_CLIENT_ID'] ?? getenv('GOOGLE_CLIENT_ID');
+        $clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? $_SERVER['GOOGLE_CLIENT_SECRET'] ?? getenv('GOOGLE_CLIENT_SECRET');
+
+        return is_string($clientId) && $clientId !== ''
+            && is_string($clientSecret) && $clientSecret !== '';
     }
 }
