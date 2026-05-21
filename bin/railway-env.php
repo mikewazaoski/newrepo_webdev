@@ -148,37 +148,56 @@ function writeLine(array &$lines, string $key, ?string $value): void
     $lines[] = $key.'='.dotenvQuote($value);
 }
 
+function applyEnv(string $key, ?string $value): void
+{
+    if ($value === null || $value === '') {
+        return;
+    }
+
+    putenv($key.'='.$value);
+    $_ENV[$key] = $value;
+    $_SERVER[$key] = $value;
+}
+
+function buildResolvedEnv(): array
+{
+    $onRailway = env('RAILWAY_ENVIRONMENT') !== null
+        || env('RAILWAY_PROJECT_ID') !== null
+        || env('RAILWAY_PUBLIC_DOMAIN') !== null;
+
+    $resolved = [
+        'APP_ENV' => env('APP_ENV', 'prod'),
+        'APP_DEBUG' => env('APP_DEBUG', '0'),
+        'APP_SECRET' => env('APP_SECRET'),
+        'TRUSTED_PROXIES' => env('TRUSTED_PROXIES', 'REMOTE_ADDR'),
+        'DEFAULT_URI' => resolveDefaultUri(),
+        'MESSENGER_TRANSPORT_DSN' => env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0'),
+        'MAILER_DSN' => env('MAILER_DSN', 'null://null'),
+        'CORS_ALLOW_ORIGIN' => env('CORS_ALLOW_ORIGIN'),
+        'GOOGLE_CLIENT_ID' => env('GOOGLE_CLIENT_ID'),
+        'GOOGLE_CLIENT_SECRET' => env('GOOGLE_CLIENT_SECRET'),
+    ];
+
+    $databaseUrl = resolveDatabaseUrl();
+    if ($databaseUrl !== null) {
+        $resolved['DATABASE_URL'] = normalizeDatabaseUrl($databaseUrl);
+    }
+
+    return array_filter(
+        $resolved,
+        static fn (?string $value): bool => $value !== null && $value !== ''
+    );
+}
+
 $projectDir = dirname(__DIR__);
 $envPath = $projectDir.'/.env';
 
+$resolvedEnv = buildResolvedEnv();
+
 $lines = [];
-
-writeLine($lines, 'APP_ENV', env('APP_ENV', 'prod'));
-writeLine($lines, 'APP_DEBUG', env('APP_DEBUG', '0'));
-writeLine($lines, 'APP_SECRET', env('APP_SECRET'));
-writeLine($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
-writeLine($lines, 'DEFAULT_URI', resolveDefaultUri());
-$onRailway = env('RAILWAY_ENVIRONMENT') !== null
-    || env('RAILWAY_PROJECT_ID') !== null
-    || env('RAILWAY_PUBLIC_DOMAIN') !== null;
-writeLine(
-    $lines,
-    'MESSENGER_TRANSPORT_DSN',
-    env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0')
-);
-writeLine($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
-writeLine($lines, 'CORS_ALLOW_ORIGIN', env('CORS_ALLOW_ORIGIN'));
-writeLine($lines, 'GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID'));
-writeLine($lines, 'GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET'));
-
-$databaseUrl = resolveDatabaseUrl();
-
-if ($databaseUrl !== null) {
-    $databaseUrl = normalizeDatabaseUrl($databaseUrl);
-    putenv('DATABASE_URL='.$databaseUrl);
-    $_ENV['DATABASE_URL'] = $databaseUrl;
-    $_SERVER['DATABASE_URL'] = $databaseUrl;
-    writeLine($lines, 'DATABASE_URL', $databaseUrl);
+foreach ($resolvedEnv as $key => $value) {
+    writeLine($lines, $key, $value);
+    applyEnv($key, $value);
 }
 
 file_put_contents($envPath, implode("\n", $lines)."\n");
@@ -191,7 +210,7 @@ $exportKeys = [
 
 if (in_array('--shell', $argv, true)) {
     foreach ($exportKeys as $key) {
-        $value = env($key);
+        $value = $resolvedEnv[$key] ?? null;
         if ($value !== null) {
             echo 'export '.$key.'='.escapeshellarg($value)."\n";
         }
@@ -199,9 +218,10 @@ if (in_array('--shell', $argv, true)) {
     exit(0);
 }
 
-if ($databaseUrl === null) {
+if (!isset($resolvedEnv['DATABASE_URL'])) {
     fwrite(STDERR, "railway-env: WARNING — no database URL found. Set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service.\n");
     exit(0);
 }
 
+$databaseUrl = $resolvedEnv['DATABASE_URL'];
 fwrite(STDOUT, "railway-env: wrote .env with DATABASE_URL for ".(parse_url($databaseUrl, PHP_URL_HOST) ?: 'database')."\n");
