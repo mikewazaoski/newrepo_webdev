@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Service\ActivityLogService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,10 +23,6 @@ class AuthenticationController extends AbstractController
             if ($this->isGranted('ROLE_ADMIN')) {
                 return $this->redirectToRoute('app_admin_dashboard');
             }
-            if ($this->isGranted('ROLE_STAFF')) {
-                return $this->redirectToRoute('app_staff_home');
-            }
-
             return $this->redirectToRoute('app_home');
         }
 

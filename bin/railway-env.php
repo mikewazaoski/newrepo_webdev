@@ -18,8 +18,15 @@ function env(string $name, ?string $default = null): ?string
     return $value;
 }
 
-function resolveDatabaseUrlFromMysqlVars(): ?string
+function resolveDatabaseUrl(): ?string
 {
+    foreach (['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
+        $url = env($name);
+        if ($url !== null) {
+            return $url;
+        }
+    }
+
     $host = env('MYSQLHOST');
     $database = env('MYSQLDATABASE');
     $user = env('MYSQLUSER');
@@ -39,22 +46,6 @@ function resolveDatabaseUrlFromMysqlVars(): ?string
         $port,
         $database
     );
-}
-
-function resolveDatabaseUrl(): ?string
-{
-    // Prefer private network URL (no SSL) when app and MySQL are in the same Railway project
-    foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
-        $url = env($name);
-        if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
-            return $url;
-        }
-        if ($url !== null && isLocalDockerDatabaseUrl($url)) {
-            fwrite(STDERR, "railway-env: ignoring {$name} with Docker-only host; using Railway MYSQL* variables instead.\n");
-        }
-    }
-
-    return resolveDatabaseUrlFromMysqlVars();
 }
 
 function isLocalDockerDatabaseUrl(string $url): bool
@@ -81,13 +72,7 @@ function normalizeDatabaseUrl(string $url): string
 
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
 
-    $host = $parts['host'] ?? '';
-    if (is_string($host) && str_ends_with($host, '.railway.internal')) {
-        unset($query['ssl-mode']);
-    }
-
     $parts['query'] = http_build_query($query);
-
 
     $scheme = $parts['scheme'] ?? 'mysql';
     $user = $parts['user'] ?? '';
@@ -121,96 +106,37 @@ function writeLine(array &$lines, string $key, ?string $value): void
     $lines[] = $key.'='.dotenvQuote($value);
 }
 
-function writeRequired(array &$lines, string $key, string $value): void
-{
-    $lines[] = $key.'='.dotenvQuote($value);
-    putenv($key.'='.$value);
-    $_ENV[$key] = $value;
-    $_SERVER[$key] = $value;
-}
-
-function resolveDefaultUri(): string
-{
-    $uri = env('DEFAULT_URI');
-    if ($uri !== null) {
-        return rtrim($uri, '/');
-    }
-
-    foreach (['RAILWAY_STATIC_URL', 'RAILWAY_PUBLIC_URL'] as $name) {
-        $url = env($name);
-        if ($url !== null) {
-            return rtrim($url, '/');
-        }
-    }
-
-    $domain = env('RAILWAY_PUBLIC_DOMAIN');
-    if ($domain !== null) {
-        return 'https://'.$domain;
-    }
-
-    foreach ($_ENV + $_SERVER as $key => $value) {
-        if (
-            is_string($key)
-            && is_string($value)
-            && $value !== ''
-            && str_starts_with($key, 'RAILWAY_SERVICE_')
-            && str_ends_with($key, '_URL')
-        ) {
-            return rtrim($value, '/');
-        }
-    }
-
-    fwrite(STDERR, "railway-env: WARNING — DEFAULT_URI not set; using http://localhost (set DEFAULT_URI to your Railway HTTPS URL).\n");
-
-    return 'http://localhost';
-}
-
-function resolveAppSecret(): string
-{
-    $secret = env('APP_SECRET');
-    if ($secret !== null) {
-        return $secret;
-    }
-
-    $generated = bin2hex(random_bytes(32));
-    fwrite(STDERR, "railway-env: WARNING — APP_SECRET not set; generated an ephemeral secret (set APP_SECRET in Railway Variables).\n");
-
-    return $generated;
-}
-
 $projectDir = dirname(__DIR__);
 $envPath = $projectDir.'/.env';
 
 $lines = [];
 
-$appEnv = env('APP_ENV', 'prod');
-$appDebug = env('APP_DEBUG', '0');
-$appSecret = resolveAppSecret();
-$defaultUri = resolveDefaultUri();
-$corsOrigin = env('CORS_ALLOW_ORIGIN', "^https?://(localhost|127\\.0\\.0\\.1|.*\\.up\\.railway\\.app)(:[0-9]+)?$");
-$googleClientId = env('GOOGLE_CLIENT_ID', '');
-$googleClientSecret = env('GOOGLE_CLIENT_SECRET', '');
-
-writeRequired($lines, 'APP_ENV', $appEnv);
-writeRequired($lines, 'APP_DEBUG', $appDebug);
-writeRequired($lines, 'APP_SECRET', $appSecret);
-writeRequired($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
-writeRequired($lines, 'DEFAULT_URI', $defaultUri);
-$onRailway = env('RAILWAY_ENVIRONMENT') !== null
-    || env('RAILWAY_PROJECT_ID') !== null
-    || env('RAILWAY_PUBLIC_DOMAIN') !== null;
-$messengerDsn = env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0');
-writeRequired($lines, 'MESSENGER_TRANSPORT_DSN', $messengerDsn ?? 'sync://');
-writeRequired($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
-writeRequired($lines, 'CORS_ALLOW_ORIGIN', $corsOrigin);
-writeRequired($lines, 'GOOGLE_CLIENT_ID', $googleClientId);
-writeRequired($lines, 'GOOGLE_CLIENT_SECRET', $googleClientSecret);
+writeLine($lines, 'APP_ENV', env('APP_ENV', 'prod'));
+writeLine($lines, 'APP_DEBUG', env('APP_DEBUG', '0'));
+writeLine($lines, 'APP_SECRET', env('APP_SECRET'));
+writeLine($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
+writeLine($lines, 'DEFAULT_URI', env('DEFAULT_URI'));
+writeLine($lines, 'MESSENGER_TRANSPORT_DSN', env('MESSENGER_TRANSPORT_DSN', 'doctrine://default?auto_setup=0'));
+writeLine($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
+writeLine($lines, 'CORS_ALLOW_ORIGIN', env('CORS_ALLOW_ORIGIN'));
+writeLine($lines, 'GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID'));
+writeLine($lines, 'GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET'));
 
 $databaseUrl = resolveDatabaseUrl();
+if ($databaseUrl !== null && isLocalDockerDatabaseUrl($databaseUrl)) {
+    fwrite(STDERR, "railway-env: WARNING — DATABASE_URL uses a local/Docker host ({$databaseUrl}).\n");
+    fwrite(STDERR, "  On Railway: delete DATABASE_URL and set DATABASE_URL=\${{MySQL.MYSQL_URL}} after adding MySQL.\n");
+    $databaseUrl = null;
+    putenv('DATABASE_URL');
+    unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
+}
 
 if ($databaseUrl !== null) {
     $databaseUrl = normalizeDatabaseUrl($databaseUrl);
-    writeRequired($lines, 'DATABASE_URL', $databaseUrl);
+    putenv('DATABASE_URL='.$databaseUrl);
+    $_ENV['DATABASE_URL'] = $databaseUrl;
+    $_SERVER['DATABASE_URL'] = $databaseUrl;
+    writeLine($lines, 'DATABASE_URL', $databaseUrl);
 }
 
 file_put_contents($envPath, implode("\n", $lines)."\n");

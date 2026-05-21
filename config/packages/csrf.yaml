@@ -7,5 +7,6 @@ framework:
     csrf_protection:
         stateless_token_ids:
             - submit
+            - authenticate
             - logout
             - product

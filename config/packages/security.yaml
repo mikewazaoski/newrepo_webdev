@@ -60,7 +60,6 @@ security:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/verify-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/resend-verification, roles: PUBLIC_ACCESS }
-        - { path: ^/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/profile, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/products, roles: PUBLIC_ACCESS }

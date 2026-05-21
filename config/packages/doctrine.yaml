@@ -37,9 +37,6 @@ when@prod:
     doctrine:
         dbal:
             server_version: '8.0'
-            # Railway MySQL: skip SSL cert verify (public proxy hosts)
-            options:
-                1014: false
         orm:
             auto_generate_proxy_classes: false
             proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'

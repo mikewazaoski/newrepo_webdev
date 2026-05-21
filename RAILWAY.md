@@ -2,8 +2,6 @@
 
 ## Quick setup (required)
 
-Copy variables from [railway.env.example](railway.env.example) into the **app service** (not MySQL).
-
 1. **New Project** → Deploy from GitHub → this repo.
 2. **Add MySQL** (`+ New` → Database → MySQL). Note the service name (e.g. `MySQL`).
 3. On the **app service** (not MySQL), open **Variables** and add:
@@ -13,20 +11,11 @@ Copy variables from [railway.env.example](railway.env.example) into the **app se
 | `APP_ENV` | `prod` |
 | `APP_DEBUG` | `0` |
 | `APP_SECRET` | Random 32+ character string |
-| `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` — replace `MySQL` with your MySQL service name. **Delete** any value with `127.0.0.1`, `localhost`, or `@mysql:` (Docker-only). |
-| `DEFAULT_URI` | `https://YOUR-APP.up.railway.app` (optional — auto-detected from `RAILWAY_PUBLIC_DOMAIN` if omitted) |
+| `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` — replace `MySQL` with your MySQL service name |
+| `DEFAULT_URI` | `https://YOUR-APP.up.railway.app` (after generating a domain) |
 | `TRUSTED_PROXIES` | `REMOTE_ADDR` |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` |
 | `MAILER_DSN` | `null://null` (or your SMTP DSN) |
-
-Optional (creates admin on first deploy if no user with that email exists):
-
-| Variable | Value |
-|----------|--------|
-| `ADMIN_EMAIL` | Your login email |
-| `ADMIN_PASSWORD` | Your login password |
-| `ADMIN_USERNAME` | `admin` (optional) |
-| `ADMIN_NAME` | `Administrator` (optional) |
 
 4. **Networking** on the app service → **Generate Domain** → set `DEFAULT_URI` to that HTTPS URL.
 5. Redeploy the app service.
@@ -68,8 +57,6 @@ Do **not** copy the raw URL by hand unless necessary — references stay in sync
 | Deploy crashes / `exit 1` on database | **Add MySQL** to the project. On the app service, set `DATABASE_URL` = `${{MySQL.MYSQL_URL}}`. **Delete** any `DATABASE_URL` with `127.0.0.1`, `localhost`, or `@mysql:` (Docker-only). |
 | `Unable to read "/app/.env"` | Redeploy latest image (entrypoint creates `.env` at startup). |
 | Migrations fail | Check deploy logs; ensure MySQL and app are in the **same Railway project**. |
-| **500 on /login** (or all pages) | Set `DEFAULT_URI` to your HTTPS domain, or redeploy latest code (`bin/railway-env.php` auto-fills it). Ensure deploy logs show **cache warmup OK** (not suppressed). Set `DATABASE_URL=\${{MySQL.MYSQL_URL}}`. |
-| **Healthcheck failure** on deploy | Fixed: Railway uses `/health` (app up). After deploy, open `/api/mobile/health` — must show `"database":"connected"` before login works. |
 | 502 / app not listening | Railway sets `PORT` automatically — do not hardcode Docker port 8080 in variables. |
 
 ## Optional: persistent uploads
