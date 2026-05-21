@@ -6,6 +6,7 @@ Run the full stack locally: **Symfony app**, **MySQL**, and **phpMyAdmin**.
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) or Docker Engine + Compose (Linux)
 - At least **4 GB RAM** free for Docker (first build compiles PHP extensions and runs `npm run build`)
+- **No XAMPP/WAMP on port 80** — uninstall XAMPP if you do not use it (Settings → Apps → XAMPP → Uninstall), or run `.\scripts\stop-local-apache.ps1` as Administrator
 
 ## Quick start
 
@@ -21,29 +22,11 @@ First build may take **10–20 minutes**. Later starts are much faster.
 
 | Service | URL |
 |---------|-----|
-| **Pet Pantry app** | http://localhost:8080 |
-| **Login page** | http://localhost:8080/login |
+| **Pet Pantry app** | http://localhost |
+| **Login page** | http://localhost/login |
+| **Alternate port** | http://localhost:8080 |
 | **phpMyAdmin** | http://localhost:8081 |
 | **MySQL** (from host) | `127.0.0.1:3307` |
-
-### `localhost/login` shows Apache 404?
-
-**Port 80** is XAMPP Apache; the app runs in Docker on **port 8080**.
-
-**Quick fix (no XAMPP change):** http://localhost:8080/login
-
-**Fix `http://localhost/login` (recommended on Windows + XAMPP):**
-
-1. Start Docker: `docker compose up -d`
-2. **Run PowerShell as Administrator:**
-   ```powershell
-   cd D:\Desktop\pantry\pets
-   .\scripts\install-xampp-proxy.ps1
-   ```
-3. In **XAMPP Control Panel** → **Stop** Apache → **Start** Apache
-4. Open http://localhost/login
-
-This proxies XAMPP (port 80) to Docker (port 8080).
 
 ### Database credentials (Docker)
 
@@ -95,7 +78,8 @@ The `app` container (`entrypoint.sh`):
 | Problem | Fix |
 |---------|-----|
 | `overlayfs/snapshots ... no such file or directory` | Corrupted Docker cache. Run `.\docker-fix-build.ps1` or restart Docker Desktop, then `docker builder prune -af` and `docker compose build --no-cache app` |
-| Port 8080 in use | Set `APP_PORT=8090` in `.env.docker` or environment |
+| Port 80 in use | Set `HTTP_PORT=8080` in `.env.docker` (app only on :8080) |
+| Port 8080 in use | Set `APP_PORT=8090` in `.env.docker` |
 | Build fails at `npm run build` | Ensure `package-lock.json` is committed; run `npm ci && npm run build` locally |
 | Database connection error | Run `docker compose ps` — `mysql` must be **healthy** before `app` starts |
 | Permission errors on uploads | `docker compose exec app chown -R www-data:www-data var public/uploads` |

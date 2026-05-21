@@ -1,4 +1,4 @@
-# Symfony front controller (Apache / XAMPP). DocumentRoot must be this public/ folder.
+# Symfony front controller for Apache. DocumentRoot must be this public/ folder.
 DirectoryIndex index.php
 
 <IfModule mod_negotiation.c>
