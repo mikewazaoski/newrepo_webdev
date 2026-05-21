@@ -39,6 +39,7 @@ security:
                 default_target_path: app_staff_home
                 always_use_default_target_path: false
                 success_handler: App\Security\AuthenticationSuccessHandler
+                failure_handler: App\Security\LoginAuthenticationFailureHandler
                 enable_csrf: true
             logout:
                 path: app_logout

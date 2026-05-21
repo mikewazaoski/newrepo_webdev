@@ -266,6 +266,13 @@
 
 <div class="login-overlay">
     <div class="login-container">
+        {% for message in app.flashes('error') %}
+            <div class="error-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+
         {% if error %}
             <div class="error-alert">
                 <i class="fas fa-exclamation-triangle"></i>

@@ -24,9 +24,13 @@ class SecurityEventListener implements EventSubscriberInterface
 
     public function onLogin(InteractiveLoginEvent $event): void
     {
-        $user = $event->getAuthenticationToken()->getUser();
-        if ($user instanceof \App\Entity\User) {
-            $this->logService->logLogin($user);
+        try {
+            $user = $event->getAuthenticationToken()->getUser();
+            if ($user instanceof \App\Entity\User) {
+                $this->logService->logLogin($user);
+            }
+        } catch (\Throwable) {
+            // Do not break login if audit logging fails
         }
     }
 
