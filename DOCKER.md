@@ -6,7 +6,7 @@ Run the full stack locally: **Symfony app**, **MySQL**, and **phpMyAdmin**.
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) or Docker Engine + Compose (Linux)
 - At least **4 GB RAM** free for Docker (first build compiles PHP extensions and runs `npm run build`)
-- **No XAMPP/WAMP on port 80** — uninstall XAMPP if you do not use it (Settings → Apps → XAMPP → Uninstall), or run `.\scripts\stop-local-apache.ps1` as Administrator
+- **No Apache on port 80** — if you see `Apache/2.4.58 (Win64)` errors, run **`Run-Fix-As-Admin.bat`** (or right‑click `FIX-LOCALHOST-LOGIN.ps1` → Run as administrator)
 
 ## Quick start
 

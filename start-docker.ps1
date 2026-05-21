@@ -1,6 +1,15 @@
 # Build and start Pet Pantry with Docker Compose
 Set-Location $PSScriptRoot
 
+# Apache/XAMPP on port 80 causes 404 — offer one-click fix
+$apacheOn80 = Get-NetTCPConnection -LocalPort 80 -State Listen -ErrorAction SilentlyContinue |
+    Where-Object { (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName -eq 'httpd' }
+if ($apacheOn80) {
+    Write-Host "WARNING: Apache is using port 80 (XAMPP). http://localhost/login will NOT work." -ForegroundColor Red
+    Write-Host "  Fix: double-click Run-Fix-As-Admin.bat in this folder (requires Admin / UAC)." -ForegroundColor Yellow
+    Write-Host "  Or use: http://localhost:8080/login`n" -ForegroundColor Yellow
+}
+
 Write-Host "Building and starting Pet Pantry..." -ForegroundColor Cyan
 docker compose up --build -d
 
