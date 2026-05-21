@@ -113,11 +113,33 @@ function normalizeDatabaseUrl(string $url): string
 
 function dotenvQuote(string $value): string
 {
-    if (preg_match('/[\s#"\'\\\\]/', $value)) {
+    // Symfony interprets % as parameter syntax in .env files — always escape it.
+    $value = str_replace('%', '%%', $value);
+
+    if (preg_match('/[\s#"\'\\\\=:&?@]/', $value)) {
         return '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
     }
 
     return $value;
+}
+
+function resolveAppSecret(bool $onRailway): ?string
+{
+    $secret = env('APP_SECRET');
+    if ($secret !== null) {
+        return $secret;
+    }
+
+    if (!$onRailway) {
+        return null;
+    }
+
+    $seed = env('RAILWAY_PROJECT_ID')
+        ?? env('RAILWAY_ENVIRONMENT_NAME')
+        ?? env('RAILWAY_PUBLIC_DOMAIN')
+        ?? 'pet-pantry-railway';
+
+    return hash('sha256', 'pet-pantry-app-secret:'.$seed);
 }
 
 function resolveDefaultUri(): ?string
@@ -171,12 +193,12 @@ function buildResolvedEnv(): array
     $resolved = [
         'APP_ENV' => env('APP_ENV', 'prod'),
         'APP_DEBUG' => env('APP_DEBUG', '0'),
-        'APP_SECRET' => env('APP_SECRET'),
+        'APP_SECRET' => resolveAppSecret($onRailway),
         'TRUSTED_PROXIES' => env('TRUSTED_PROXIES', 'REMOTE_ADDR'),
         'DEFAULT_URI' => resolveDefaultUri(),
         'MESSENGER_TRANSPORT_DSN' => env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0'),
         'MAILER_DSN' => env('MAILER_DSN', 'null://null'),
-        'CORS_ALLOW_ORIGIN' => env('CORS_ALLOW_ORIGIN'),
+        'CORS_ALLOW_ORIGIN' => env('CORS_ALLOW_ORIGIN', $onRailway ? '*' : null),
         'GOOGLE_CLIENT_ID' => env('GOOGLE_CLIENT_ID'),
         'GOOGLE_CLIENT_SECRET' => env('GOOGLE_CLIENT_SECRET'),
     ];
@@ -218,32 +240,6 @@ if (in_array('--shell', $argv, true)) {
             echo 'export '.$key.'='.escapeshellarg($value)."\n";
         }
     }
-    exit(0);
-}
-
-if (in_array('--write-fpm-env', $argv, true)) {
-    $target = '/usr/local/etc/php-fpm.d/zz-app-env.conf';
-    $lines = [
-        '; Auto-generated at container start — passes resolved env into PHP-FPM workers',
-        '[www]',
-    ];
-
-    foreach ($exportKeys as $key) {
-        $value = $resolvedEnv[$key] ?? null;
-        if ($value === null || $value === '') {
-            continue;
-        }
-
-        $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
-        $lines[] = 'env['.$key.'] = "'.$escaped.'"';
-    }
-
-    file_put_contents($target, implode("\n", $lines)."\n");
-
-    $host = isset($resolvedEnv['DATABASE_URL'])
-        ? (parse_url($resolvedEnv['DATABASE_URL'], PHP_URL_HOST) ?: 'unknown')
-        : 'none';
-    fwrite(STDOUT, "railway-env: wrote {$target} (DATABASE_URL host: {$host})\n");
     exit(0);
 }
 

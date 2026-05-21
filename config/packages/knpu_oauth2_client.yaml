@@ -1,8 +1,12 @@
+parameters:
+    google_client_id_default: ''
+    google_client_secret_default: ''
+
 knpu_oauth2_client:
     clients:
         google:
             type: google
-            client_id: '%env(GOOGLE_CLIENT_ID)%'
-            client_secret: '%env(GOOGLE_CLIENT_SECRET)%'
+            client_id: '%env(default:google_client_id_default:GOOGLE_CLIENT_ID)%'
+            client_secret: '%env(default:google_client_secret_default:GOOGLE_CLIENT_SECRET)%'
             redirect_route: connect_google_check
     http_client: oauth2_http_client
