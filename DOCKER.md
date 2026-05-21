@@ -25,10 +25,13 @@ First build takes 10–20 minutes. Later starts are fast.
 
 | What | URL |
 |------|-----|
-| **Home** | http://localhost:8080 |
-| **Login** | http://localhost:8080/login |
+| **Home** | http://localhost |
+| **Login** | http://localhost/login |
+| **Also works** | http://localhost:8080/login |
 | **phpMyAdmin** (optional) | http://localhost:8081 |
 | **MySQL** (from your PC) | `127.0.0.1:3307` |
+
+`start-docker.ps1` stops old Windows Apache on port 80 (if present) so Docker can use `http://localhost/login`. No XAMPP is used by this project.
 
 ### Database (Docker MySQL)
 
