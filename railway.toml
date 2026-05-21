@@ -6,8 +6,9 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/"
-healthcheckTimeout = 120
+# Liveness only (static file, no DB). Verify MySQL at /api/mobile/health after deploy.
+healthcheckPath = "/health"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 # Railway sets PORT automatically; entrypoint listens on ${PORT} (container nginx on port 80 by default)
