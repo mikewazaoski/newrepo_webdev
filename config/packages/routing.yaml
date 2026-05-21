@@ -1,7 +1,10 @@
+parameters:
+    app.default_uri: 'http://localhost'
+
 framework:
     router:
         # Used for CLI and absolute URL generation (Docker: DEFAULT_URI=http://localhost)
-        default_uri: '%env(DEFAULT_URI)%'
+        default_uri: '%env(default:app.default_uri:DEFAULT_URI)%'
 
 when@prod:
     framework:
