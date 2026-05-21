@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PORT="${PORT:-8080}"
+PORT="${PORT:-80}"
 export PORT
 
 echo "Starting Pet Pantry on port ${PORT}..."

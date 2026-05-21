@@ -1,7 +1,6 @@
 # Pet Pantry — Docker only (app + MySQL).
+# Port mapping: host 8080 -> container 80 (open http://localhost:8080)
 # Start: .\start-docker.ps1   OR   docker compose up -d
-# App:    http://localhost  and  http://localhost:8080
-# Login:  http://localhost/login
 
 services:
   app:
@@ -11,16 +10,15 @@ services:
     image: pet-pantry-app:latest
     restart: unless-stopped
     ports:
-      - "80:8080"
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_PORT:-8080}:80"
     environment:
       APP_ENV: prod
       APP_DEBUG: "0"
       APP_SECRET: ${APP_SECRET:-pet_pantry_docker_change_this_secret_32chars}
       DATABASE_URL: mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4
-      DEFAULT_URI: ${DEFAULT_URI:-http://localhost}
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8080}
       TRUSTED_PROXIES: REMOTE_ADDR
-      PORT: "8080"
+      PORT: "80"
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
       MAILER_DSN: null://null
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'

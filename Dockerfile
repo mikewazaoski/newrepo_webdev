@@ -90,8 +90,8 @@ RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENV APP_ENV=prod \
     APP_DEBUG=0 \
-    PORT=8080
+    PORT=80
 
-EXPOSE 8080
+EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]

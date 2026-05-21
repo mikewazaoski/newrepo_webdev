@@ -23,15 +23,14 @@ First build takes 10–20 minutes. Later starts are fast.
 
 ## URLs
 
+Docker maps **host port 8080** → **container port 80** (`8080:80`).
+
 | What | URL |
 |------|-----|
-| **Home** | http://localhost |
-| **Login** | http://localhost/login |
-| **Also works** | http://localhost:8080/login |
+| **Home** | http://localhost:8080 |
+| **Login** | http://localhost:8080/login |
 | **phpMyAdmin** (optional) | http://localhost:8081 |
 | **MySQL** (from your PC) | `127.0.0.1:3307` |
-
-`start-docker.ps1` stops old Windows Apache on port 80 (if present) so Docker can use `http://localhost/login`. No XAMPP is used by this project.
 
 ### Database (Docker MySQL)
 
@@ -57,7 +56,7 @@ docker compose up --build -d  # rebuild after code changes
 
 | Container | Role |
 |-----------|------|
-| `app` | Symfony + Nginx + PHP (port **8080**) |
+| `app` | Symfony + Nginx + PHP (published as **8080:80**) |
 | `mysql` | MySQL 8 database |
 | `phpmyadmin` | Web UI for MySQL (port **8081**) |
 
