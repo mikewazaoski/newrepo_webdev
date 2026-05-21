@@ -11,7 +11,7 @@
 | `APP_ENV` | `prod` |
 | `APP_DEBUG` | `0` |
 | `APP_SECRET` | Random 32+ character string |
-| `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` — replace `MySQL` with your MySQL service name |
+| `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` — replace `MySQL` with your MySQL service name. **Delete** any value with `127.0.0.1`, `localhost`, or `@mysql:` (Docker-only). |
 | `DEFAULT_URI` | `https://YOUR-APP.up.railway.app` (optional — auto-detected from `RAILWAY_PUBLIC_DOMAIN` if omitted) |
 | `TRUSTED_PROXIES` | `REMOTE_ADDR` |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` |

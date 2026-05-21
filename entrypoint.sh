@@ -14,6 +14,8 @@ cd /app
 # Resolve MYSQL_URL / MYSQLHOST → DATABASE_URL and write /app/.env for Symfony + PHP-FPM
 php bin/railway-env.php
 eval "$(php bin/railway-env.php --shell)"
+chmod 644 .env 2>/dev/null || true
+chown www-data:www-data .env 2>/dev/null || true
 
 if [ -z "${APP_SECRET:-}" ]; then
     echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
@@ -34,6 +36,16 @@ if [ -n "${DATABASE_URL:-}" ]; then
         echo "Running database migrations..."
         php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}" || \
             echo "WARNING: Migrations failed — app will still start."
+        echo "Verifying database as web user (www-data)..."
+        if su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null; then
+            echo "Database OK for PHP-FPM (www-data can read .env and connect)."
+        else
+            echo "WARNING: www-data cannot connect — fixing .env permissions..."
+            chmod 644 .env 2>/dev/null || true
+            chown www-data:www-data .env 2>/dev/null || true
+            su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null || \
+                echo "ERROR: PHP-FPM still cannot reach MySQL. Check DATABASE_URL=\${{MySQL.MYSQL_URL}} on Railway."
+        fi
     else
         echo "ERROR: Cannot connect to database."
         echo "  Railway: add MySQL, set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service (remove 127.0.0.1 / @mysql: URLs)."

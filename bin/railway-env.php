@@ -18,15 +18,8 @@ function env(string $name, ?string $default = null): ?string
     return $value;
 }
 
-function resolveDatabaseUrl(): ?string
+function resolveDatabaseUrlFromMysqlVars(): ?string
 {
-    foreach (['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
-        $url = env($name);
-        if ($url !== null) {
-            return $url;
-        }
-    }
-
     $host = env('MYSQLHOST');
     $database = env('MYSQLDATABASE');
     $user = env('MYSQLUSER');
@@ -46,6 +39,21 @@ function resolveDatabaseUrl(): ?string
         $port,
         $database
     );
+}
+
+function resolveDatabaseUrl(): ?string
+{
+    foreach (['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PRIVATE_URL', 'MYSQL_PUBLIC_URL'] as $name) {
+        $url = env($name);
+        if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
+            return $url;
+        }
+        if ($url !== null && isLocalDockerDatabaseUrl($url)) {
+            fwrite(STDERR, "railway-env: ignoring {$name} with Docker-only host; using Railway MYSQL* variables instead.\n");
+        }
+    }
+
+    return resolveDatabaseUrlFromMysqlVars();
 }
 
 function isLocalDockerDatabaseUrl(string $url): bool
@@ -71,6 +79,18 @@ function normalizeDatabaseUrl(string $url): string
     }
 
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
+
+    $host = $parts['host'] ?? '';
+    if (
+        is_string($host)
+        && $host !== ''
+        && !str_ends_with($host, '.railway.internal')
+        && (str_contains($host, 'railway') || str_contains($host, 'rlwy.net'))
+        && !isset($query['ssl-mode'])
+    ) {
+        // Railway public MySQL proxy requires SSL from PHP PDO
+        $query['ssl-mode'] = 'REQUIRED';
+    }
 
     $parts['query'] = http_build_query($query);
 
@@ -188,13 +208,6 @@ writeRequired($lines, 'GOOGLE_CLIENT_ID', $googleClientId);
 writeRequired($lines, 'GOOGLE_CLIENT_SECRET', $googleClientSecret);
 
 $databaseUrl = resolveDatabaseUrl();
-if ($databaseUrl !== null && isLocalDockerDatabaseUrl($databaseUrl)) {
-    fwrite(STDERR, "railway-env: WARNING — DATABASE_URL uses a local/Docker host ({$databaseUrl}).\n");
-    fwrite(STDERR, "  On Railway: delete DATABASE_URL and set DATABASE_URL=\${{MySQL.MYSQL_URL}} after adding MySQL.\n");
-    $databaseUrl = null;
-    putenv('DATABASE_URL');
-    unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
-}
 
 if ($databaseUrl !== null) {
     $databaseUrl = normalizeDatabaseUrl($databaseUrl);

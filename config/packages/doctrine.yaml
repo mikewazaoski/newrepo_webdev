@@ -37,6 +37,9 @@ when@prod:
     doctrine:
         dbal:
             server_version: '8.0'
+            # Railway MySQL uses SSL; skip cert verification (no CA bundle in container)
+            options:
+                !php/const PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT: false
         orm:
             auto_generate_proxy_classes: false
             proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
