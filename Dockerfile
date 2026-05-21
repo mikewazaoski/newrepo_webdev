@@ -39,10 +39,10 @@ RUN composer install \
     --optimize-autoloader
 
 # ---- Frontend assets (Webpack Encore) ----
-FROM node:20-alpine AS assets
-WORKDIR /app
-
+# Use bookworm (not alpine) to avoid stale BuildKit cache layers on Docker Desktop for Windows
+FROM node:20-bookworm-slim AS assets
 COPY --from=vendor /app /app
+WORKDIR /app
 RUN npm ci && npm run build
 
 # ---- Production image (PHP-FPM + Nginx) ----
@@ -85,7 +85,8 @@ COPY docker/nginx/nginx-main.conf /etc/nginx/nginx.conf
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/php-fpm/zz-railway.conf /usr/local/etc/php-fpm.d/zz-railway.conf
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Fix Windows CRLF line endings so Linux can execute the script
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENV APP_ENV=prod \
     APP_DEBUG=0 \

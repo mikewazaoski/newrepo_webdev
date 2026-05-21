@@ -74,6 +74,7 @@ The `app` container (`entrypoint.sh`):
 
 | Problem | Fix |
 |---------|-----|
+| `overlayfs/snapshots ... no such file or directory` | Corrupted Docker cache. Run `.\docker-fix-build.ps1` or restart Docker Desktop, then `docker builder prune -af` and `docker compose build --no-cache app` |
 | Port 8080 in use | Set `APP_PORT=8090` in `.env.docker` or environment |
 | Build fails at `npm run build` | Ensure `package-lock.json` is committed; run `npm ci && npm run build` locally |
 | Database connection error | Run `docker compose ps` — `mysql` must be **healthy** before `app` starts |
