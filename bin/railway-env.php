@@ -82,13 +82,16 @@ function normalizeDatabaseUrl(string $url): string
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
 
     $host = $parts['host'] ?? '';
-    if (
+    if (is_string($host) && str_ends_with($host, '.railway.internal')) {
+        // Private Railway network — SSL is not used on .railway.internal
+        $query['ssl-mode'] = 'DISABLED';
+    } elseif (
         is_string($host)
         && $host !== ''
-        && !str_ends_with($host, '.railway.internal')
         && (str_contains($host, 'railway') || str_contains($host, 'rlwy.net'))
         && !isset($query['ssl-mode'])
     ) {
+        // Public Railway MySQL proxy requires SSL from PHP PDO
         $query['ssl-mode'] = 'REQUIRED';
     }
 
@@ -215,6 +218,32 @@ if (in_array('--shell', $argv, true)) {
             echo 'export '.$key.'='.escapeshellarg($value)."\n";
         }
     }
+    exit(0);
+}
+
+if (in_array('--write-fpm-env', $argv, true)) {
+    $target = '/usr/local/etc/php-fpm.d/zz-app-env.conf';
+    $lines = [
+        '; Auto-generated at container start — passes resolved env into PHP-FPM workers',
+        '[www]',
+    ];
+
+    foreach ($exportKeys as $key) {
+        $value = $resolvedEnv[$key] ?? null;
+        if ($value === null || $value === '') {
+            continue;
+        }
+
+        $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+        $lines[] = 'env['.$key.'] = "'.$escaped.'"';
+    }
+
+    file_put_contents($target, implode("\n", $lines)."\n");
+
+    $host = isset($resolvedEnv['DATABASE_URL'])
+        ? (parse_url($resolvedEnv['DATABASE_URL'], PHP_URL_HOST) ?: 'unknown')
+        : 'none';
+    fwrite(STDOUT, "railway-env: wrote {$target} (DATABASE_URL host: {$host})\n");
     exit(0);
 }
 

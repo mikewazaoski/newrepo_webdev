@@ -45,16 +45,14 @@ class RegistrationController extends AbstractController
                 $entityManager->persist($user);
                 $entityManager->flush();
             } catch (\Throwable $e) {
-                if ($this->isDatabaseFailure($e)) {
-                    $this->addFlash(
-                        'error',
-                        'Account creation failed: the app cannot reach the database. In Railway, add MySQL and set DATABASE_URL to ${{MySQL.MYSQL_URL}} on the app service, then redeploy.'
-                    );
-                } else {
-                    $this->addFlash('error', 'Account creation failed. That email or username may already be in use.');
-                }
+                $message = $this->isDatabaseConnectionFailure($e)
+                    ? 'Account creation failed: the app cannot reach the database. In Railway, add MySQL and set DATABASE_URL to ${{MySQL.MYSQL_URL}} on the app service, then redeploy.'
+                    : 'Account creation failed. That email or username may already be in use.';
 
-                return $this->redirectToRoute('app_register');
+                return $this->render('registration/register.html.twig', [
+                    'registrationForm' => $form,
+                    'registrationError' => $message,
+                ]);
             }
 
             $verificationUrl = $this->generateUrl(
@@ -79,14 +77,28 @@ class RegistrationController extends AbstractController
         ]);
     }
 
-    private function isDatabaseFailure(\Throwable $throwable): bool
+    private function isDatabaseConnectionFailure(\Throwable $throwable): bool
     {
         while (true) {
-            if ($throwable instanceof DBALException) {
+            if ($throwable instanceof DBALException\ConnectionException) {
                 return true;
             }
+            if ($throwable instanceof DBALException) {
+                $sqlState = $throwable->getSQLState();
+                if (in_array($sqlState, ['HY000', '08006', '08001', '08004', '08S01', '2002', '2006'], true)) {
+                    return true;
+                }
+            }
             $message = strtolower($throwable->getMessage());
-            if (str_contains($message, 'connection') || str_contains($message, 'sqlstate')) {
+            if (
+                str_contains($message, 'connection refused')
+                || str_contains($message, 'connection timed out')
+                || str_contains($message, 'getaddrinfo')
+                || str_contains($message, 'access denied for user')
+                || str_contains($message, 'unknown database')
+                || str_contains($message, 'server has gone away')
+                || str_contains($message, 'no such file or directory')
+            ) {
                 return true;
             }
             if ($throwable->getPrevious() === null) {
