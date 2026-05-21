@@ -18,15 +18,8 @@ function env(string $name, ?string $default = null): ?string
     return $value;
 }
 
-function resolveDatabaseUrl(): ?string
+function resolveDatabaseUrlFromMysqlVars(): ?string
 {
-    foreach (['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
-        $url = env($name);
-        if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
-            return $url;
-        }
-    }
-
     $host = env('MYSQLHOST');
     $database = env('MYSQLDATABASE');
     $user = env('MYSQLUSER');
@@ -46,6 +39,22 @@ function resolveDatabaseUrl(): ?string
         $port,
         $database
     );
+}
+
+function resolveDatabaseUrl(): ?string
+{
+    // Private URL first — same Railway project, no public SSL proxy
+    foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
+        $url = env($name);
+        if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
+            return $url;
+        }
+        if ($url !== null && isLocalDockerDatabaseUrl($url)) {
+            fwrite(STDERR, "railway-env: ignoring {$name} with Docker-only host; trying other sources.\n");
+        }
+    }
+
+    return resolveDatabaseUrlFromMysqlVars();
 }
 
 function isLocalDockerDatabaseUrl(string $url): bool
@@ -72,6 +81,17 @@ function normalizeDatabaseUrl(string $url): string
 
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
 
+    $host = $parts['host'] ?? '';
+    if (
+        is_string($host)
+        && $host !== ''
+        && !str_ends_with($host, '.railway.internal')
+        && (str_contains($host, 'railway') || str_contains($host, 'rlwy.net'))
+        && !isset($query['ssl-mode'])
+    ) {
+        $query['ssl-mode'] = 'REQUIRED';
+    }
+
     $parts['query'] = http_build_query($query);
 
     $scheme = $parts['scheme'] ?? 'mysql';
@@ -97,6 +117,28 @@ function dotenvQuote(string $value): string
     return $value;
 }
 
+function resolveDefaultUri(): ?string
+{
+    $uri = env('DEFAULT_URI');
+    if ($uri !== null) {
+        return rtrim($uri, '/');
+    }
+
+    foreach (['RAILWAY_STATIC_URL', 'RAILWAY_PUBLIC_URL'] as $name) {
+        $url = env($name);
+        if ($url !== null) {
+            return rtrim($url, '/');
+        }
+    }
+
+    $domain = env('RAILWAY_PUBLIC_DOMAIN');
+    if ($domain !== null) {
+        return 'https://'.$domain;
+    }
+
+    return null;
+}
+
 function writeLine(array &$lines, string $key, ?string $value): void
 {
     if ($value === null || $value === '') {
@@ -115,8 +157,15 @@ writeLine($lines, 'APP_ENV', env('APP_ENV', 'prod'));
 writeLine($lines, 'APP_DEBUG', env('APP_DEBUG', '0'));
 writeLine($lines, 'APP_SECRET', env('APP_SECRET'));
 writeLine($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
-writeLine($lines, 'DEFAULT_URI', env('DEFAULT_URI'));
-writeLine($lines, 'MESSENGER_TRANSPORT_DSN', env('MESSENGER_TRANSPORT_DSN', 'doctrine://default?auto_setup=0'));
+writeLine($lines, 'DEFAULT_URI', resolveDefaultUri());
+$onRailway = env('RAILWAY_ENVIRONMENT') !== null
+    || env('RAILWAY_PROJECT_ID') !== null
+    || env('RAILWAY_PUBLIC_DOMAIN') !== null;
+writeLine(
+    $lines,
+    'MESSENGER_TRANSPORT_DSN',
+    env('MESSENGER_TRANSPORT_DSN', $onRailway ? 'sync://' : 'doctrine://default?auto_setup=0')
+);
 writeLine($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
 writeLine($lines, 'CORS_ALLOW_ORIGIN', env('CORS_ALLOW_ORIGIN'));
 writeLine($lines, 'GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID'));

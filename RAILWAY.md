@@ -55,6 +55,7 @@ Do **not** copy the raw URL by hand unless necessary — references stay in sync
 | Symptom | Fix |
 |---------|-----|
 | Deploy crashes / `exit 1` on database | **Add MySQL** to the project. On the app service, set `DATABASE_URL` = `${{MySQL.MYSQL_URL}}`. **Delete** any `DATABASE_URL` with `127.0.0.1`, `localhost`, or `@mysql:` (Docker-only). |
+| **500 on register or login** | Open `/api/mobile/health` — if `"database":"disconnected"`, MySQL is not linked. Add MySQL, set `DATABASE_URL=${{MySQL.MYSQL_URL}}`, redeploy. Check deploy logs for `Database OK for PHP-FPM`. |
 | `Unable to read "/app/.env"` | Redeploy latest image (entrypoint creates `.env` at startup). |
 | Migrations fail | Check deploy logs; ensure MySQL and app are in the **same Railway project**. |
 | 502 / app not listening | Railway sets `PORT` automatically — do not hardcode Docker port 8080 in variables. |

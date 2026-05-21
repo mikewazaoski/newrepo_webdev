@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
-use App\Repository\UserRepository;
+use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\EmailVerificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,19 +41,33 @@ class RegistrationController extends AbstractController
             $user->setVerificationToken($verificationToken);
             $user->setIsVerified(false);
 
-            $entityManager->persist($user);
-            $entityManager->flush();
+            try {
+                $entityManager->persist($user);
+                $entityManager->flush();
+            } catch (\Throwable $e) {
+                if ($this->isDatabaseFailure($e)) {
+                    $this->addFlash(
+                        'error',
+                        'Account creation failed: the app cannot reach the database. In Railway, add MySQL and set DATABASE_URL to ${{MySQL.MYSQL_URL}} on the app service, then redeploy.'
+                    );
+                } else {
+                    $this->addFlash('error', 'Account creation failed. That email or username may already be in use.');
+                }
 
-            // do anything else you need here, like send an email
-            // Generate verification URL
+                return $this->redirectToRoute('app_register');
+            }
+
             $verificationUrl = $this->generateUrl(
                 'app_verify_email',
                 ['token' => $verificationToken],
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
 
-            // Send verification email
-            $emailVerificationService->sendVerificationEmail($user, $verificationUrl);
+            try {
+                $emailVerificationService->sendVerificationEmail($user, $verificationUrl);
+            } catch (\Throwable) {
+                // Account is saved; email is optional when MAILER_DSN is null://null
+            }
 
             $this->addFlash('success', 'Registration successful! Please check your email to verify your account.');
 
@@ -63,6 +77,23 @@ class RegistrationController extends AbstractController
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form,
         ]);
+    }
+
+    private function isDatabaseFailure(\Throwable $throwable): bool
+    {
+        while (true) {
+            if ($throwable instanceof DBALException) {
+                return true;
+            }
+            $message = strtolower($throwable->getMessage());
+            if (str_contains($message, 'connection') || str_contains($message, 'sqlstate')) {
+                return true;
+            }
+            if ($throwable->getPrevious() === null) {
+                return false;
+            }
+            $throwable = $throwable->getPrevious();
+        }
     }
 }
 

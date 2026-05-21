@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Register - The Pet Pantry</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+        <style>
+            :root {
+                --primary: #8B5E3C;
+                --primary-2: #A7744D;
+                --primary-3: #C89B6D;
+                --nav-bg: #b07d50;
+                --text: #1f1f1f;
+                --muted: #6a6a6a;
+                --surface: #ffffff;
+                --surface-2: #f6f3ed;
+                --shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background-color: var(--surface-2);
+                color: var(--text);
+            }
+
+            /* NAVBAR */
+            nav {
+                width: 100%;
+                background: linear-gradient(90deg, #9a6b3f 0%, #b07d50 40%, #bc8a5a 100%);
+                display: flex;
+                align-items: center;
+                padding: 0 40px;
+                height: 64px;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                box-shadow: var(--shadow);
+            }
+
+            /* LOGO */
+            .logo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: #fff8f0;
+                letter-spacing: 1.8px;
+                text-transform: uppercase;
+                white-space: nowrap;
+                flex-shrink: 0;
+                text-decoration: none;
+            }
+
+            .logo-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                object-fit: cover;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                transition: transform 0.3s ease;
+            }
+
+            .logo:hover .logo-icon {
+                transform: rotate(-10deg) scale(1.1);
+            }
+
+            /* BURGER MENU BUTTON */
+            .burger-menu {
+                display: none;
+                flex-direction: column;
+                cursor: pointer;
+                padding: 4px;
+                background: none;
+                border: none;
+                color: #fff8f0;
+            }
+
+            .burger-menu span {
+                width: 25px;
+                height: 3px;
+                background-color: #fff8f0;
+                margin: 3px 0;
+                transition: 0.3s;
+                border-radius: 2px;
+            }
+
+            .burger-menu.active span:nth-child(1) {
+                transform: rotate(-45deg) translate(-5px, 6px);
+            }
+
+            .burger-menu.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .burger-menu.active span:nth-child(3) {
+                transform: rotate(45deg) translate(-5px, -6px);
+            }
+
+            /* MOBILE NAVIGATION */
+            .mobile-nav {
+                display: none;
+                position: fixed;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #9a6b3f 0%, #b07d50 50%, #bc8a5a 100%);
+                box-shadow: var(--shadow);
+                z-index: 999;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease-out;
+            }
+
+            .mobile-nav.active {
+                max-height: 400px;
+                overflow-y: auto;
+            }
+
+            .mobile-nav-content {
+                padding: 20px;
+            }
+
+            .mobile-nav-links {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                margin-bottom: 20px;
+            }
+
+            .mobile-nav-links a {
+                color: #fff8f0;
+                font-size: 0.9rem;
+                font-weight: 500;
+                padding: 12px 16px;
+                border-radius: 8px;
+                text-decoration: none;
+                letter-spacing: 0.3px;
+                transition: background 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .mobile-nav-links a:hover {
+                background: rgba(255,255,255,0.15);
+            }
+
+            .mobile-nav-links a i {
+                width: 20px;
+                text-align: center;
+            }
+
+            .mobile-nav-auth {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                border-top: 1px solid rgba(255,255,255,0.2);
+                padding-top: 15px;
+            }
+
+            .mobile-nav-auth a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                padding: 10px 16px;
+                border-radius: 20px;
+                text-decoration: none;
+                letter-spacing: 0.3px;
+                transition: all 0.25s ease;
+            }
+
+            .mobile-nav-auth a i {
+                font-size: 0.85rem;
+            }
+
+            /* CENTER NAV LINKS */
+            .nav-center {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 2px;
+            }
+
+            .nav-center a {
+                color: #fff8f0;
+                font-size: 0.85rem;
+                font-weight: 500;
+                padding: 8px 16px;
+                border-radius: 6px;
+                text-decoration: none;
+                letter-spacing: 0.4px;
+                transition: background 0.2s ease, transform 0.2s ease;
+                position: relative;
+            }
+
+            .nav-center a::after {
+                content: '';
+                position: absolute;
+                bottom: 4px;
+                left: 50%;
+                transform: translateX(-50%) scaleX(0);
+                width: 60%;
+                height: 2px;
+                background: rgba(255,255,255,0.7);
+                border-radius: 2px;
+                transition: transform 0.25s ease;
+            }
+
+            .nav-center a:hover::after { transform: translateX(-50%) scaleX(1); }
+            .nav-center a:hover { background: rgba(255,255,255,0.12); }
+
+            /* RIGHT AUTH BUTTONS */
+            .nav-right {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .nav-right a {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 0.83rem;
+                font-weight: 600;
+                padding: 7px 16px;
+                border-radius: 20px;
+                text-decoration: none;
+                letter-spacing: 0.3px;
+                transition: all 0.25s ease;
+            }
+
+            .nav-right a i {
+                font-size: 0.8rem;
+            }
+
+            /* Sign Up  outlined style */
+            .btn-signup {
+                color: #fff8f0;
+                border: 1.5px solid rgba(255,255,255,0.6);
+                background: transparent;
+            }
+
+            .btn-signup:hover {
+                background: rgba(255,255,255,0.15);
+                border-color: #fff;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+            /* Register  filled style */
+            .btn-register {
+                color: var(--primary);
+                background: #fff8f0;
+                border: 1.5px solid transparent;
+            }
+
+            .btn-register:hover {
+                background: #ffffff;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            }
+
+            /* Logout */
+            .btn-logout {
+                color: #fff8f0;
+                border: 1.5px solid rgba(255,255,255,0.5);
+                background: transparent;
+            }
+
+            .btn-logout:hover {
+                background: rgba(255,255,255,0.15);
+                transform: translateY(-1px);
+            }
+
+            /* PAGE CONTENT */
+            main { min-height: calc(100vh - 200px); }
+
+            /* Footer */
+            footer {
+                background: #1f1a16;
+                color: rgba(255,255,255,0.7);
+                margin-top: 40px;
+                letter-spacing: 0.3px;
+            }
+
+            .footer-content {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 40px;
+                padding: 50px 40px 30px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .footer-section h4 {
+                color: #fff8f0;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 15px;
+                letter-spacing: 0.5px;
+            }
+
+            .footer-section p {
+                line-height: 1.6;
+                font-size: 0.9rem;
+                margin-bottom: 0;
+            }
+
+            .footer-section ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .footer-section ul li {
+                margin-bottom: 8px;
+            }
+
+            .footer-section ul li a {
+                color: rgba(255,255,255,0.7);
+                text-decoration: none;
+                font-size: 0.9rem;
+                transition: color 0.3s ease;
+            }
+
+            .footer-section ul li a:hover {
+                color: #fff8f0;
+            }
+
+            .social-links {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+
+            .social-links a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 50%;
+                color: rgba(255,255,255,0.7);
+                text-decoration: none;
+                transition: all 0.3s ease;
+                font-size: 0.9rem;
+            }
+
+            .social-links a:hover {
+                background: var(--primary);
+                color: #fff8f0;
+                transform: translateY(-2px);
+            }
+
+            .contact-info {
+                font-size: 0.85rem;
+                line-height: 1.6;
+            }
+
+            .contact-info i {
+                width: 16px;
+                margin-right: 8px;
+                color: var(--primary);
+            }
+
+            .footer-bottom {
+                border-top: 1px solid rgba(255,255,255,0.1);
+                padding: 20px 40px;
+                text-align: center;
+                background: rgba(0,0,0,0.2);
+            }
+
+            .footer-bottom p {
+                margin: 0;
+                font-size: 0.85rem;
+            }
+
+            .footer-bottom a {
+                color: rgba(255,255,255,0.7);
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
+
+            .footer-bottom a:hover {
+                color: #fff8f0;
+            }
+
+            /* Responsive */
+            @media (max-width: 1024px) {
+                nav {
+                    padding: 0 30px;
+                }
+
+                .logo {
+                    font-size: 0.85rem;
+                    gap: 8px;
+                }
+
+                .logo-icon {
+                    width: 32px;
+                    height: 32px;
+                }
+
+                .nav-center a {
+                    font-size: 0.8rem;
+                    padding: 7px 12px;
+                }
+
+                .nav-right a {
+                    font-size: 0.75rem;
+                    padding: 6px 12px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .burger-menu {
+                    display: flex;
+                    order: 2;
+                }
+
+                .mobile-nav {
+                    display: block;
+                }
+
+                nav {
+                    padding: 0 20px;
+                    justify-content: space-between;
+                }
+
+                .logo {
+                    font-size: 0.85rem;
+                    gap: 8px;
+                    order: 1;
+                }
+
+                .logo-icon {
+                    width: 32px;
+                    height: 32px;
+                }
+
+                .nav-center {
+                    display: none;
+                }
+
+                .nav-right {
+                    display: none;
+                }
+
+                main {
+                    min-height: calc(100vh - 150px);
+                }
+
+                .footer-content {
+                    padding: 30px 20px 20px;
+                    gap: 30px;
+                }
+
+                .footer-section h4 {
+                    font-size: 1rem;
+                }
+
+                .footer-section p,
+                .footer-section ul li a {
+                    font-size: 0.85rem;
+                }
+
+                .social-links a {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 0.8rem;
+                }
+
+                .contact-info {
+                    font-size: 0.8rem;
+                }
+
+                .footer-bottom {
+                    padding: 15px 20px;
+                }
+
+                .footer-bottom p {
+                    font-size: 0.8rem;
+                }
+            }
+
+            @media (max-width: 480px) {
+                nav {
+                    padding: 0 15px;
+                }
+
+                .logo {
+                    font-size: 0.75rem;
+                    letter-spacing: 1px;
+                }
+
+                .logo-icon {
+                    width: 28px;
+                    height: 28px;
+                }
+
+                .burger-menu span {
+                    width: 22px;
+                    height: 2.5px;
+                }
+
+                .mobile-nav-content {
+                    padding: 15px;
+                }
+
+                .mobile-nav-links a {
+                    font-size: 0.85rem;
+                    padding: 10px 12px;
+                }
+
+                .mobile-nav-auth a {
+                    font-size: 0.8rem;
+                    padding: 8px 14px;
+                }
+
+                main {
+                    min-height: calc(100vh - 140px);
+                }
+
+                .footer-content {
+                    grid-template-columns: 1fr;
+                    gap: 25px;
+                    padding: 25px 15px 15px;
+                }
+
+                .footer-section h4 {
+                    font-size: 0.95rem;
+                    margin-bottom: 12px;
+                }
+
+                .footer-section p,
+                .footer-section ul li a {
+                    font-size: 0.8rem;
+                }
+
+                .social-links {
+                    gap: 12px;
+                }
+
+                .social-links a {
+                    width: 30px;
+                    height: 30px;
+                    font-size: 0.75rem;
+                }
+
+                .contact-info {
+                    font-size: 0.75rem;
+                }
+
+                .footer-bottom {
+                    padding: 12px 15px;
+                }
+
+                .footer-bottom p {
+                    font-size: 0.75rem;
+                }
+            }
+
+            @media (max-width: 320px) {
+                nav {
+                    padding: 0 12px;
+                }
+
+                .logo {
+                    font-size: 0.7rem;
+                    letter-spacing: 0.8px;
+                }
+
+                .logo-icon {
+                    width: 24px;
+                    height: 24px;
+                }
+
+                .burger-menu span {
+                    width: 20px;
+                    height: 2px;
+                }
+
+                .footer-content {
+                    padding: 20px 12px 12px;
+                    gap: 20px;
+                }
+
+                .footer-section h4 {
+                    font-size: 0.9rem;
+                }
+
+                .footer-section p,
+                .footer-section ul li a {
+                    font-size: 0.75rem;
+                }
+
+                .social-links a {
+                    width: 28px;
+                    height: 28px;
+                    font-size: 0.7rem;
+                }
+
+                .contact-info {
+                    font-size: 0.7rem;
+                }
+
+                .footer-bottom {
+                    padding: 10px 12px;
+                }
+
+                .footer-bottom p {
+                    font-size: 0.7rem;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav>
+            <a class="logo" href="#">
+                <img src="/image/petpantry.png" alt="The Pet Pantry Logo" class="logo-icon">
+                THE PETS PANTRY
+            </a>
+
+            <button class="burger-menu" id="burgerMenu" aria-label="Toggle navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+                            <div class="nav-center">
+                    <a href="/">Home</a>
+                    <a href="/about/">About Us</a>
+                    <a href="/history/">Our History</a>
+                    <a href="/products/">Our Products</a>
+                    <a href="/contact/">Contact Us</a>
+                </div>
+                <div class="nav-right">
+                    <a href="/login" class="btn-signup">
+                        <i class="fas fa-user-circle"></i> Sign In
+                    </a>
+                    <a href="/register" class="btn-register">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                </div>
+                    </nav>
+
+        <!-- Mobile Navigation -->
+        <div class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-content">
+                                    <div class="mobile-nav-links">
+                        <a href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                        <a href="/about/">
+                            <i class="fas fa-info-circle"></i> About Us
+                        </a>
+                        <a href="/history/">
+                            <i class="fas fa-history"></i> Our History
+                        </a>
+                        <a href="/products/">
+                            <i class="fas fa-box"></i> Our Products
+                        </a>
+                        <a href="/contact/">
+                            <i class="fas fa-envelope"></i> Contact Us
+                        </a>
+                    </div>
+                    <div class="mobile-nav-auth">
+                        <a href="/login" class="btn-signup">
+                            <i class="fas fa-user-circle"></i> Sign In
+                        </a>
+                        <a href="/register" class="btn-register">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </div>
+                            </div>
+        </div>
+
+        <main>
+            <style>
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        background-image: url('/image/orins.png');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+    .register-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+    }
+
+    .register-form-wrapper {
+        position: relative;
+        max-width: 500px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        backdrop-filter: blur(8px);
+    }
+
+    .register-form-wrapper h1 {
+        text-align: center;
+        color: #8B5E3C;
+        margin: 0 0 30px 0;
+        font-size: 2rem;
+    }
+
+    .register-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .register-form input,
+    .register-form select,
+    .register-form textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .register-form input:focus,
+    .register-form select:focus,
+    .register-form textarea:focus {
+        border-color: #8B5E3C;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
+    }
+
+    .register-form label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+
+    .checkbox-group label {
+        margin: 0;
+        color: #555;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .alert {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border-left-color: #28a745;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border-left-color: #dc3545;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 94, 60, 0.4);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    .register-footer {
+        text-align: center;
+        margin-top: 25px;
+        color: #777;
+    }
+
+    .register-footer p {
+        margin: 0 0 10px 0;
+    }
+
+    .register-footer a {
+        color: #8B5E3C;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .register-footer a:hover {
+        color: #A0724E;
+        text-decoration: underline;
+    }
+
+    /* Tablet (768px and below) */
+    @media (max-width: 768px) {
+        .register-container {
+            padding: 20px 16px;
+        }
+
+        .register-form-wrapper {
+            padding: 30px;
+        }
+
+        .register-form-wrapper h1 {
+            font-size: 1.7rem;
+            margin-bottom: 24px;
+        }
+
+        .register-form {
+            gap: 16px;
+        }
+
+        .register-form input,
+        .register-form select,
+        .register-form textarea {
+            padding: 11px;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            padding: 12px;
+            font-size: 1rem;
+        }
+    }
+
+    /* Mobile (480px and below) */
+    @media (max-width: 480px) {
+        .register-container {
+            padding: 16px 12px;
+            min-height: auto;
+        }
+
+        .register-form-wrapper {
+            padding: 24px;
+            border-radius: 12px;
+        }
+
+        .register-form-wrapper h1 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .register-form {
+            gap: 14px;
+        }
+
+        .register-form input,
+        .register-form select,
+        .register-form textarea {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+
+        .register-form label {
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .checkbox-group {
+            gap: 8px;
+        }
+
+        .checkbox-group label {
+            font-size: 0.85rem;
+        }
+
+        .alert {
+            padding: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .submit-btn {
+            padding: 11px;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        .register-footer {
+            margin-top: 20px;
+        }
+
+        .register-footer p {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .register-footer a {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Very small phones (320px) */
+    @media (max-width: 320px) {
+        .register-container {
+            padding: 12px 8px;
+        }
+
+        .register-form-wrapper {
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .register-form-wrapper h1 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+        }
+
+        .register-form {
+            gap: 12px;
+        }
+
+        .register-form input,
+        .register-form select,
+        .register-form textarea {
+            padding: 9px;
+            font-size: 16px;
+        }
+
+        .register-form label {
+            font-size: 0.85rem;
+        }
+
+        .submit-btn {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .register-footer p {
+            font-size: 0.8rem;
+        }
+
+        .register-footer a {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-overlay"></div>
+    <div class="register-form-wrapper">
+        <h1>📝 Create Account</h1>
+        
+        
+        
+        <form name="registration_form" method="post" class="register-form">
+            <div class="form-group">
+                <label for="registration_form_name" class="required">Full Name</label>
+                <input type="text" id="registration_form_name" name="registration_form[name]" required="required" placeholder="Enter your full name" value="Test User" />
+                
+            </div>
+
+            <div class="form-group">
+                <label for="registration_form_email" class="required">Email</label>
+                <input type="email" id="registration_form_email" name="registration_form[email]" required="required" placeholder="Enter your email address" value="testuser99999@example.com" />
+                
+            </div>
+
+            <div class="form-group">
+                <label for="registration_form_username" class="required">Username</label>
+                <input type="text" id="registration_form_username" name="registration_form[username]" required="required" placeholder="Choose a username" value="testuser99999" />
+                
+            </div>
+
+            <div class="form-group">
+                <label for="registration_form_plainPassword_first" class="required">Password</label>
+                <input type="password" id="registration_form_plainPassword_first" name="registration_form[plainPassword][first]" required="required" placeholder="Enter your password" />
+                
+            </div>
+
+            <div class="form-group">
+                <label for="registration_form_plainPassword_second" class="required">Confirm Password</label>
+                <input type="password" id="registration_form_plainPassword_second" name="registration_form[plainPassword][second]" required="required" placeholder="Confirm your password" />
+                
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="registration_form_agreeTerms" name="registration_form[agreeTerms]" required="required" value="1" checked="checked" />
+                <label style="" for="registration_form_agreeTerms" class="required">I agree to the terms and conditions</label>
+            </div>
+            
+
+            <button type="submit" class="submit-btn">Register</button>
+        <input type="hidden" id="registration_form__token" name="registration_form[_token]" data-controller="csrf-protection" value="csrf-token" /></form>
+
+        <div class="register-footer">
+            <p>Already have an account?</p>
+            <a href="/login">Sign In →</a>
+        </div>
+    </div>
+</div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>The Pet Pantry</h4>
+                    <p>Your trusted partner for quality pet supplies and nutrition since 2025.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about/">About Us</a></li>
+                        <li><a href="/products/">Our Products</a></li>
+                        <li><a href="/contact/">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Categories</h4>
+                    <ul>
+                        <li><a href="#">Dog Supplies</a></li>
+                        <li><a href="#">Cat Supplies</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Connect With Us</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                    <p class="contact-info">
+                        <i class="fas fa-envelope"></i> pet@pantry.com<br>
+                        <i class="fas fa-phone"></i> +63 09267027071
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 The Pet Pantry | All rights reserved | <a href="#" style="color: inherit;">Privacy Policy</a> | <a href="#" style="color: inherit;">Terms of Service</a></p>
+            </div>
+        </footer>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const burgerMenu = document.getElementById('burgerMenu');
+                const mobileNav = document.getElementById('mobileNav');
+                
+                // Toggle mobile menu
+                burgerMenu.addEventListener('click', function() {
+                    burgerMenu.classList.toggle('active');
+                    mobileNav.classList.toggle('active');
+                });
+
+                // Close mobile menu when clicking on a link
+                const mobileLinks = document.querySelectorAll('.mobile-nav-links a, .mobile-nav-auth a');
+                mobileLinks.forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        burgerMenu.classList.remove('active');
+                        mobileNav.classList.remove('active');
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    const isClickInsideNav = nav.contains(event.target);
+                    const isClickInsideMobileNav = mobileNav.contains(event.target);
+                    
+                    if (!isClickInsideNav && !isClickInsideMobileNav) {
+                        burgerMenu.classList.remove('active');
+                        mobileNav.classList.remove('active');
+                    }
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        burgerMenu.classList.remove('active');
+                        mobileNav.classList.remove('active');
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

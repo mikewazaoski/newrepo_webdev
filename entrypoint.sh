@@ -14,6 +14,8 @@ cd /app
 # Resolve MYSQL_URL / MYSQLHOST → DATABASE_URL and write /app/.env for Symfony + PHP-FPM
 php bin/railway-env.php
 eval "$(php bin/railway-env.php --shell)"
+chmod 644 .env 2>/dev/null || true
+chown www-data:www-data .env 2>/dev/null || true
 
 if [ -z "${APP_SECRET:-}" ]; then
     echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
@@ -31,6 +33,16 @@ if [ -n "${DATABASE_URL:-}" ]; then
         echo "Running database migrations..."
         php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}" || \
             echo "WARNING: Migrations failed — app will still start."
+        echo "Verifying database as web user (www-data)..."
+        if su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null; then
+            echo "Database OK for PHP-FPM (www-data can read .env and connect)."
+        else
+            echo "WARNING: www-data cannot connect — fixing .env permissions..."
+            chmod 644 .env 2>/dev/null || true
+            chown www-data:www-data .env 2>/dev/null || true
+            su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null || \
+                echo "ERROR: PHP-FPM still cannot reach MySQL. Set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service."
+        fi
     else
         echo "WARNING: Cannot connect to database — app will start without migrations."
         echo "  Railway: add MySQL service, then set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service."
@@ -41,8 +53,8 @@ else
     echo "WARNING: No DATABASE_URL / MYSQL_URL — skipping migrations."
 fi
 
-mkdir -p var/cache var/log public/uploads/images
-chown -R www-data:www-data var public/uploads 2>/dev/null || true
+mkdir -p var/cache var/log public/uploads/images /tmp/petpantry-sessions
+chown -R www-data:www-data var public/uploads /tmp/petpantry-sessions 2>/dev/null || true
 
 php-fpm -D
 exec nginx -g 'daemon off;'
