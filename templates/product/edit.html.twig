@@ -1,0 +1,582 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Product - The Pet Pantry{% endblock %}
+
+{% block body %}
+<style>
+    .product-edit-container {
+        padding: 35px;
+        max-width: 900px;
+        margin: 0 auto;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Section */
+    .edit-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(139, 94, 60, 0.1);
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .edit-header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .back-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: white;
+        border: 1px solid rgba(139, 94, 60, 0.2);
+        color: #8B5E3C;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .back-button:hover {
+        background: #8B5E3C;
+        color: white;
+        transform: translateX(-3px);
+        box-shadow: 0 4px 12px rgba(139, 94, 60, 0.2);
+    }
+
+    .edit-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #3E2723;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-badge {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+        border-left: 4px solid #2196F3;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: start;
+        gap: 12px;
+    }
+
+    .info-box i {
+        color: #1565C0;
+        font-size: 1.2rem;
+        margin-top: 2px;
+    }
+
+    .info-box-content h4 {
+        margin: 0 0 6px 0;
+        font-size: 1rem;
+        color: #1565C0;
+        font-weight: 600;
+    }
+
+    .info-box-content p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #424242;
+        line-height: 1.5;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 35px;
+        box-shadow: 0 4px 20px rgba(139, 94, 60, 0.08);
+        border: 1px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #3E2723;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .section-title i {
+        color: #8B5E3C;
+    }
+
+    /* Form Styling */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #3E2723;
+        margin-bottom: 8px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group textarea,
+    .form-group select,
+    .form-group input[type="file"] {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid rgba(139, 94, 60, 0.2);
+        border-radius: 10px;
+        font-size: 1rem;
+        color: #3E2723;
+        background: white;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Hide peso sign from number input */
+    .form-group input[type="number"]::-webkit-inner-spin-button,
+    .form-group input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="number"]:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #8B5E3C;
+        box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-group input[type="file"] {
+        padding: 10px;
+        cursor: pointer;
+        border-style: dashed;
+    }
+
+    .form-group input[type="file"]::-webkit-file-upload-button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #8B5E3C, #A0724E);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 12px;
+    }
+
+    .form-group input[type="file"]::-webkit-file-upload-button:hover {
+        background: linear-gradient(135deg, #A0724E, #8B5E3C);
+        transform: translateY(-1px);
+    }
+
+    .form-help {
+        font-size: 0.85rem;
+        color: #8B5E3C;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    .form-error {
+        color: #F44336;
+        font-size: 0.85rem;
+        margin-top: 6px;
+    }
+
+    /* Required field indicator */
+    .required-indicator {
+        color: #F44336;
+        margin-left: 4px;
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group.full-width {
+            grid-column: 1;
+        }
+    }
+
+    /* Current Image Section */
+    .current-image-section {
+        background: rgba(139, 94, 60, 0.03);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .current-image-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #8B5E3C;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .current-image-preview {
+        max-width: 250px;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin: 0 auto;
+    }
+
+    .no-image-box {
+        max-width: 250px;
+        width: 100%;
+        aspect-ratio: 1;
+        background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        margin: 0 auto;
+    }
+
+    .no-image-box i {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        opacity: 0.3;
+    }
+
+    .no-image-box p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .btn {
+        flex: 1;
+        padding: 14px 24px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 94, 60, 0.4);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #F44336, #D32F2F);
+        color: white;
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+    }
+
+    /* Warning Box */
+    .warning-box {
+        background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+        border-left: 4px solid #FF9800;
+        border-radius: 10px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: start;
+        gap: 12px;
+        margin-top: 15px;
+    }
+
+    .warning-box i {
+        color: #E65100;
+        font-size: 1.2rem;
+        margin-top: 2px;
+    }
+
+    .warning-box-content h4 {
+        margin: 0 0 6px 0;
+        font-size: 0.95rem;
+        color: #E65100;
+        font-weight: 600;
+    }
+
+    .warning-box-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6D4C41;
+        line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .product-edit-container {
+            padding: 20px;
+        }
+
+        .edit-header h1 {
+            font-size: 1.6rem;
+        }
+
+        .form-card {
+            padding: 25px 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .edit-header h1 {
+            font-size: 1.4rem;
+        }
+
+        .header-badge {
+            font-size: 0.75rem;
+            padding: 5px 12px;
+        }
+
+        .current-image-preview,
+        .no-image-box {
+            max-width: 200px;
+        }
+    }
+</style>
+
+<div class="product-edit-container">
+    <!-- Header -->
+    <div class="edit-header">
+        <div class="edit-header-left">
+            <a href="{{ path('app_product_index') }}" class="back-button" title="Back to products">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1><i class="fas fa-edit"></i> Edit Product</h1>
+        </div>
+        <span class="header-badge">Editing</span>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+        <i class="fas fa-info-circle"></i>
+        <div class="info-box-content">
+            <h4>Editing Product</h4>
+            <p>Update your product information below. Make sure all required fields are filled in correctly before saving.</p>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <h2 class="section-title">
+            <i class="fas fa-box"></i>
+            Product Information
+        </h2>
+
+        <!-- Current Image Preview -->
+        <div class="current-image-section">
+            <span class="current-image-label">Current Product Image</span>
+            {% if product.image %}
+                <img src="{{ asset('uploads/images/' ~ product.image) }}" 
+                     alt="{{ product.name }}" 
+                     class="current-image-preview">
+            {% else %}
+                <div class="no-image-box">
+                    <i class="fas fa-image"></i>
+                    <p>No image uploaded</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% for message in app.flashes('success') %}
+            <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% if not form.vars.valid %}
+            <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+                <strong>Please fix the following errors:</strong>
+                {{ form_errors(form) }}
+            </div>
+        {% endif %}
+
+        {{ form_start(form, {'method': 'POST', 'attr': {'enctype': 'multipart/form-data'}}) }}
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.price) }}
+                    {{ form_widget(form.price) }}
+                    {{ form_errors(form.price) }}
+                </div>
+
+                <div class="form-group full-width">
+                    {{ form_label(form.description) }}
+                    {{ form_widget(form.description) }}
+                    {{ form_errors(form.description) }}
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.image) }}
+                    {{ form_widget(form.image) }}
+                    {{ form_errors(form.image) }}
+                    <small class="form-help">Upload a new image to replace the current one</small>
+                </div>
+
+                <div class="form-group">
+                    {{ form_label(form.category) }}
+                    {{ form_widget(form.category) }}
+                    {{ form_errors(form.category) }}
+                </div>
+
+                </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-save">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ path('app_product_show', {'id': product.id}) }}" class="btn btn-view">
+                    <i class="fas fa-eye"></i> View Product
+                </a>
+                {{ include('product/_delete_form.html.twig') }}
+            </div>
+
+            <!-- Warning Box -->
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="warning-box-content">
+                    <h4>Delete Warning</h4>
+                    <p>Deleting this product is permanent and cannot be undone.</p>
+                </div>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+
+<script>
+    // Loading animation on submit and ensure form submits
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form[name="product"]');
+        const submitBtn = form?.querySelector('.btn-save');
+        
+        // Ensure form submits properly
+        submitBtn?.addEventListener('click', function(e) {
+            // Check if form is valid
+            if (form && form.checkValidity()) {
+                // Show loading state
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Changes...';
+                this.disabled = true;
+                
+                // Let the form submit naturally
+                form.submit();
+            } else {
+                // If invalid, let browser show validation messages
+                e.preventDefault();
+                form.reportValidity();
+            }
+        });
+        
+        // Alternative: handle form submit event
+        form?.addEventListener('submit', function(e) {
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving Changes...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

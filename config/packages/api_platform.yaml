@@ -1,0 +1,12 @@
+api_platform:
+    title: Hello API Platform
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+    swagger:
+        versions: [3]
+    # Disable Hydra format for simpler responses
+    enable_docs: true
+    show_webby: false

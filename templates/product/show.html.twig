@@ -1,0 +1,452 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} - The Pet Pantry{% endblock %}
+
+{% block body %}
+<style>
+    .product-view-container {
+        padding: 35px;
+        max-width: 1200px;
+        margin: 0 auto;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    .view-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .back-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: white;
+        border: 1px solid rgba(139, 94, 60, 0.2);
+        color: #8B5E3C;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .back-button:hover {
+        background: #8B5E3C;
+        color: white;
+        transform: translateX(-3px);
+        box-shadow: 0 4px 12px rgba(139, 94, 60, 0.2);
+    }
+
+    .view-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #3E2723;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* Main Content Layout */
+    .product-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 35px;
+        margin-bottom: 30px;
+    }
+
+    /* Image Section */
+    .image-section {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(139, 94, 60, 0.08);
+        border: 1px solid rgba(139, 94, 60, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+    }
+
+    .product-image-large {
+        width: 100%;
+        max-width: 500px;
+        height: 450px;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease;
+    }
+
+    .product-image-large:hover {
+        transform: scale(1.02);
+    }
+
+    .no-image-placeholder {
+        width: 100%;
+        max-width: 500px;
+        height: 450px;
+        background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+    }
+
+    .no-image-placeholder i {
+        font-size: 5rem;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
+
+    .no-image-placeholder p {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* Details Section */
+    .details-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(139, 94, 60, 0.08);
+        border: 1px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .product-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #3E2723;
+        margin: 0 0 10px 0;
+        line-height: 1.3;
+    }
+
+    .product-id {
+        font-size: 0.9rem;
+        color: #8B5E3C;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: block;
+        font-family: 'Courier New', monospace;
+    }
+
+    .product-price {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2E7D32;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .price-label {
+        font-size: 1rem;
+        color: #6D4C41;
+        font-weight: 500;
+    }
+
+    .detail-group {
+        margin-bottom: 25px;
+        padding-bottom: 25px;
+        border-bottom: 1px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .detail-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .detail-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #8B5E3C;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .detail-label i {
+        font-size: 1rem;
+    }
+
+    .detail-value {
+        font-size: 1.1rem;
+        color: #3E2723;
+        line-height: 1.6;
+    }
+
+    .category-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #8B5E3C, #A0724E);
+        color: white;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .no-category {
+        color: #999;
+        font-style: italic;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid rgba(139, 94, 60, 0.1);
+    }
+
+    .btn {
+        flex: 1;
+        padding: 14px 24px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #F44336, #D32F2F);
+        color: white;
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+    }
+
+    .btn-restock {
+        background: linear-gradient(135deg, #FFB300, #FB8C00);
+        color: white;
+        box-shadow: 0 4px 12px rgba(251, 140, 0, 0.35);
+    }
+
+    .btn-restock:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(251, 140, 0, 0.45);
+    }
+
+    /* Additional Info Card */
+    .additional-info {
+        background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 25px;
+        border-left: 4px solid #FF9800;
+    }
+
+    .additional-info h3 {
+        font-size: 1.1rem;
+        color: #E65100;
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .additional-info p {
+        font-size: 0.95rem;
+        color: #6D4C41;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+        .product-content {
+            grid-template-columns: 1fr;
+        }
+
+        .image-section {
+            min-height: 400px;
+        }
+
+        .product-image-large,
+        .no-image-placeholder {
+            height: 350px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .product-view-container {
+            padding: 20px;
+        }
+
+        .view-header h1 {
+            font-size: 1.6rem;
+        }
+
+        .product-title {
+            font-size: 1.8rem;
+        }
+
+        .product-price {
+            font-size: 2rem;
+        }
+
+        .image-section {
+            min-height: 300px;
+        }
+
+        .product-image-large,
+        .no-image-placeholder {
+            height: 280px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .details-section {
+            padding: 20px;
+        }
+
+        .product-title {
+            font-size: 1.5rem;
+        }
+
+        .product-price {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+<div class="product-view-container">
+    <!-- Header -->
+    <div class="view-header">
+        <a href="{{ path('app_product_index') }}" class="back-button" title="Back to products">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1><i class="fas fa-box-open"></i> Product Details</h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="product-content">
+        <!-- Image Section -->
+        <div class="image-section">
+            {% if product.image %}
+                <img src="{{ asset('uploads/images/' ~ product.image) }}" 
+                     alt="{{ product.name }}" 
+                     class="product-image-large">
+            {% else %}
+                <div class="no-image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <p>No Image Available</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Details Section -->
+        <div class="details-section">
+            <h2 class="product-title">{{ product.name }}</h2>
+            <span class="product-id">ID: #{{ product.id }}</span>
+
+            <div class="product-price">
+                <span class="price-label">Price:</span>
+                ₱{{ product.price|number_format(2) }}
+            </div>
+
+            <!-- Stock Display -->
+            <div class="detail-group">
+                <div class="detail-label">
+                    <i class="fas fa-layer-group"></i>
+                    Stock
+                </div>
+                <div class="detail-value">
+                    {{ product.stock }}
+                </div>
+            </div>
+
+            <div class="detail-group">
+                <div class="detail-label">
+                    <i class="fas fa-tag"></i>
+                    Category
+                </div>
+                <div class="detail-value">
+                    {% if product.category %}
+                        <span class="category-badge">{{ product.category.name }}</span>
+                    {% else %}
+                        <span class="no-category">No Category Assigned</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="detail-group">
+                <div class="detail-label">
+                    <i class="fas fa-align-left"></i>
+                    Description
+                </div>
+                <div class="detail-value">
+                    {{ product.description|default('No description available') }}
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="additional-info">
+                <h3><i class="fas fa-info-circle"></i> Product Information</h3>
+                <p>This product is available for purchase. Contact us for bulk orders or special requests.</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if is_granted('ROLE_USER') %}
+                    <a href="{{ path('app_product_edit', {'id': product.id}) }}" class="btn btn-edit">
+                        <i class="fas fa-edit"></i> Edit Product
+                    </a>
+                    <a href="{{ path('app_product_restock', {'id': product.id}) }}" class="btn btn-restock">
+                        <i class="fas fa-boxes"></i> Restock
+                    </a>
+                    {{ include('product/_delete_form.html.twig') }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

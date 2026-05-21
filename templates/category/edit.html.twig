@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Category{% endblock %}
+
+{% block body %}
+<div style="padding: 30px; max-width: 700px; margin: 0 auto;">
+    <h1 style="color: #8B5E3C; margin-bottom: 30px;">✏️ Edit Category</h1>
+
+    {% for message in app.flashes('success') %}
+        <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    <div class="card" style="padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        {{ form_start(form) }}
+            <div style="margin-bottom: 20px;">
+                {{ form_label(form.name, null, {'label_attr': {'style': 'display: block; margin-bottom: 8px; color: #555; font-weight: 600;'}}) }}
+                {{ form_widget(form.name, {'attr': {'style': 'width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;'}}) }}
+                {{ form_errors(form.name) }}
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button type="submit" style="padding: 14px 35px; background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-save"></i> Update Category
+                </button>
+                <a href="{{ path('app_category_index') }}" style="padding: 14px 35px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block; font-size: 1.1rem; font-weight: 600;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px;">
+        <h3 style="color: #856404; margin-top: 0;">⚠️ Danger Zone</h3>
+        <p style="color: #856404;">Permanently delete this category. This action cannot be undone.</p>
+        {{ include('category/_delete_form.html.twig') }}
+    </div>
+</div>
+{% endblock %}

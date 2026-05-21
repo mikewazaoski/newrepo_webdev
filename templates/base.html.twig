@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}The Pet Pantry{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% block stylesheets %}
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        {{ encore_entry_link_tags('app') }}
+    {% endblock %}
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            background: linear-gradient(135deg, #fdf6ec 0%, #fff9f0 50%, #fef5e7 100%);
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #6B4423 0%, #8B5E3C 30%, #A0724E 60%, #C19A6B 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 0;
+            box-shadow: 4px 0 20px rgba(139, 94, 60, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin: 0;
+            padding: 35px 20px 30px;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.1);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar nav {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .sidebar a {
+            padding: 16px 28px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            margin: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .sidebar a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: #FFD700;
+            border-radius: 0 4px 4px 0;
+            transform: scaleY(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar a i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar a:hover i {
+            transform: scale(1.15);
+        }
+
+        .sidebar a.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .sidebar a.active::before {
+            transform: scaleY(1);
+        }
+
+        /* --- CONTENT AREA --- */
+        .content {
+            margin-left: 260px;
+            padding: 0;
+            flex: 1;
+            min-height: 100vh;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+        }
+
+        /* --- HEADER --- */
+        .content-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 35px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(139, 94, 60, 0.1);
+        }
+
+        .content-header .toggle-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #8B5E3C;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .content-header .toggle-btn:hover {
+            background: rgba(139, 94, 60, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* --- MAIN CONTENT BODY --- */
+        .content > div:not(.content-header) {
+            padding: 35px;
+        }
+
+        /* --- CARD STYLES (Optional Enhancement) --- */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(139, 94, 60, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(139, 94, 60, 0.1);
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(139, 94, 60, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* --- BUTTON STYLES (Optional Enhancement) --- */
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%);
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 94, 60, 0.4);
+            background: linear-gradient(135deg, #A0724E 0%, #8B5E3C 100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+            .content {
+                margin-left: 220px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 260px;
+                transform: translateX(-100%);
+                box-shadow: none;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 4px 0 20px rgba(139, 94, 60, 0.3);
+            }
+            
+            .content {
+                margin-left: 0;
+            }
+            
+            .content-header .toggle-btn {
+                display: block;
+            }
+
+            .content > div:not(.content-header) {
+                padding: 20px;
+            }
+
+            .sidebar h2 {
+                font-size: 1.5rem;
+                padding: 30px 15px 25px;
+            }
+
+            .sidebar a {
+                padding: 14px 20px;
+                margin: 3px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-header {
+                padding: 12px 15px;
+            }
+
+            .content > div:not(.content-header) {
+                padding: 12px;
+            }
+
+            .sidebar h2 {
+                font-size: 1.3rem;
+                padding: 25px 12px 20px;
+            }
+
+            .sidebar a {
+                font-size: 0.9rem;
+                padding: 11px 15px;
+                margin: 2px 8px;
+                gap: 10px;
+            }
+
+            .sidebar a span {
+                display: none;
+            }
+
+            .sidebar a i {
+                width: 20px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .content-header {
+                padding: 10px 12px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .content > div:not(.content-header) {
+                padding: 10px;
+            }
+
+            .sidebar {
+                width: 250px;
+            }
+
+            .sidebar h2 {
+                font-size: 1.2rem;
+            }
+
+            .sidebar a {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* --- OVERLAY FOR MOBILE --- */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-overlay {
+                display: block;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .sidebar-overlay.active {
+                pointer-events: all;
+            }
+        }
+    </style>
+
+    {% block javascripts %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.querySelector('.toggle-btn');
+                const sidebar = document.querySelector('.sidebar');
+                
+                // Create overlay for mobile
+                const overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                document.body.appendChild(overlay);
+                
+                // Toggle sidebar
+                toggleBtn?.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                });
+
+                // Close sidebar when clicking overlay
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+
+                // Optional: Add active class to current page link
+                const currentPath = window.location.pathname;
+                document.querySelectorAll('.sidebar a').forEach(link => {
+                    if (link.getAttribute('href') === currentPath) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        </script>
+    {% endblock %}
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>🐾 Pets Pantry</h2>
+
+        <nav>
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Admin Dashboard</span></a>
+                <a href="{{ path('app_user_index') }}"><i class="fas fa-users-cog"></i> <span>User Management</span></a>
+                <a href="{{ path('app_activity_log_index') }}"><i class="fas fa-history"></i> <span>Activity Logs</span></a>
+            {% endif %}
+            
+            {% if is_granted('ROLE_USER') %}
+                {% if not is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_staff_home') }}"><i class="fas fa-home"></i> <span>Staff Home</span></a>
+                {% endif %}
+                <a href="{{ path('app_product_index') }}"><i class="fas fa-box"></i> <span>Products</span></a>
+                <a href="{{ path('app_order_index') }}"><i class="fas fa-shopping-cart"></i> <span>Orders</span></a>
+                <a href="{{ path('app_customer_index') }}"><i class="fas fa-user-friends"></i> <span>Customers</span></a>
+                {% if is_granted('ROLE_STAFF') or is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_stock_management') }}">
+                        <i class="fas fa-warehouse"></i> Stock
+                    </a>
+                {% endif %}
+                <a href="{{ path('app_profile_show') }}"><i class="fas fa-user"></i> <span>My Profile</span></a>
+            {% endif %}
+            
+            {% if app.user %}
+                <a href="{{ path('app_logout') }}"><i class="fas fa-door-open"></i> <span>Logout</span></a>
+            {% else %}
+                <a href="{{ path('app_login') }}"><i class="fas fa-sign-in-alt"></i> <span>Login</span></a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <div class="content">
+        <div class="content-header">
+            <span class="toggle-btn"><i class="fas fa-bars"></i></span>
+        </div>
+
+        {% block body %}{% endblock %}
+    </div>
+</body>
+</html>

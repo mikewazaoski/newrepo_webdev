@@ -1,0 +1,29 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+README.md
+RAILWAY.md
+
+# Local env & cache (rebuilt in container) — use Railway Variables in production
+.env
+.env.local
+.env.*.local
+/var/
+/vendor/
+/node_modules/
+/public/build/
+
+# Dev & test
+/tests/
+/.phpunit.cache/
+phpunit.xml
+.idea/
+.vscode/
+
+# Docker compose (local only)
+docker-compose.yaml
+compose-*.yaml
+
+# Large / generated local uploads (use Railway volume or re-upload in prod)
+/public/uploads/images/*

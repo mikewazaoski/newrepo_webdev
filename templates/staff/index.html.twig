@@ -1,0 +1,765 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Staff Dashboard - The Pet Pantry{% endblock %}
+
+{% block body %}
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .dashboard-container {
+        padding: 40px 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #fafafa;
+        min-height: calc(100vh - 80px);
+    }
+
+    /* Header */
+    .dashboard-header {
+        margin-bottom: 50px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+    }
+
+    .dashboard-header p {
+        font-size: 0.95rem;
+        color: #666;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    /* Stats Grid - Minimal Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 50px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        border: 1px solid #e5e5e5;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        border-color: #d0d0d0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #999;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: #f5f5f5;
+        color: #666;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+        letter-spacing: -1px;
+    }
+
+    .stat-change {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .stat-change i {
+        font-size: 0.7rem;
+    }
+
+    .stat-change.positive {
+        color: #22c55e;
+    }
+
+    /* Section Titles */
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 24px;
+        letter-spacing: -0.3px;
+    }
+
+    /* Charts Section */
+    .charts-section {
+        margin-bottom: 50px;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        border: 1px solid #e5e5e5;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .chart-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    .chart-period {
+        font-size: 0.8rem;
+        color: #999;
+        font-weight: 500;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 280px;
+    }
+
+    /* Quick Actions - Minimal */
+    .quick-actions {
+        margin-bottom: 50px;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid #e5e5e5;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .action-card:hover {
+        border-color: #d0d0d0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .action-content h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0 0 4px 0;
+    }
+
+    .action-content p {
+        font-size: 0.8rem;
+        color: #999;
+        margin: 0;
+    }
+
+    /* Recent Activity - Minimal */
+    .recent-activity {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        border: 1px solid #e5e5e5;
+    }
+
+    .activity-item {
+        padding: 16px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: background 0.2s ease;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-item:hover {
+        background: #fafafa;
+        margin: 0 -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        border-radius: 8px;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-content p {
+        margin: 0 0 4px 0;
+        color: #1a1a1a;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 24px 20px;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            height: 240px;
+        }
+
+        .charts-grid {
+            gap: 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-container {
+            padding: 20px 16px;
+        }
+
+        .stat-card,
+        .chart-card,
+        .recent-activity {
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>Staff Dashboard</h1>
+        <p>Welcome back! Here's an overview of your pet store operations.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">Total Products</span>
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ total_products|default('0') }}</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>12% from last month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">Total Orders</span>
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ total_orders|default('0') }}</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>8% from last month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">Total Customers</span>
+                <div class="stat-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ total_customers|default('0') }}</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>5% from last month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">Total Revenue</span>
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="stat-value">₱{{ total_revenue|default('0')|number_format(2) }}</div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>15% from last month</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <h2 class="section-title">Analytics</h2>
+        
+        <div class="charts-grid">
+            <!-- Sales Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Sales Overview</h3>
+                    <span class="chart-period">Last 7 Days</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Distribution Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Top Categories</h3>
+                    <span class="chart-period">This Month</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Monthly Revenue Trend</h3>
+                <span class="chart-period">Last 6 Months</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="actions-grid">
+            <a href="{{ path('app_product_index') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="action-content">
+                    <h3>Add Product</h3>
+                    <p>Create new product listing</p>
+                </div>
+            </a>
+
+            <a href="{{ path('app_order_index') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="action-content">
+                    <h3>View Orders</h3>
+                    <p>Manage customer orders</p>
+                </div>
+            </a>
+
+            <a href="{{ path('app_stock_management') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="action-content">
+                    <h3>Stock Management</h3>
+                    <p>Update product inventory</p>
+                </div>
+            </a>
+
+            <a href="{{ path('app_customer_index') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="action-content">
+                    <h3>Customers</h3>
+                    <p>View customer list</p>
+                </div>
+            </a>
+
+            <a href="{{ path('app_category_index') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="action-content">
+                    <h3>Categories</h3>
+                    <p>Manage categories</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+        <h2 class="section-title">Recent Activity</h2>
+        
+        {% if recent_activities is defined and recent_activities|length > 0 %}
+            {% for activity in recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        {% if activity.action == 'CREATE' %}
+                            <i class="fas fa-plus"></i>
+                        {% elseif activity.action == 'UPDATE' %}
+                            <i class="fas fa-edit"></i>
+                        {% elseif activity.action == 'DELETE' %}
+                            <i class="fas fa-trash"></i>
+                        {% elseif activity.action == 'LOGIN' %}
+                            <i class="fas fa-sign-in-alt"></i>
+                        {% elseif activity.action == 'LOGOUT' %}
+                            <i class="fas fa-sign-out-alt"></i>
+                        {% else %}
+                            <i class="fas fa-bell"></i>
+                        {% endif %}
+                    </div>
+                    <div class="activity-content">
+                        <p>
+                            <strong>{% if activity.user %}{{ activity.user.username }}{% else %}System{% endif %}</strong>
+                            - {{ activity.description|default(activity.action ~ ' ' ~ activity.entityType) }}
+                        </p>
+                        <span class="activity-time">{{ activity.timestamp|date('Y-m-d H:i:s') }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No recent activity to display</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Minimal chart colors
+        const chartColors = {
+            primary: '#1a1a1a',
+            secondary: '#666',
+            background: '#f5f5f5',
+            grid: '#e5e5e5'
+        };
+
+        // Sales Chart (Line Chart)
+        const salesCtx = document.getElementById('salesChart');
+        if (salesCtx) {
+            // Prepare sales data
+            const salesLabels = [];
+            const salesData = [];
+            const dailySales = {{ daily_sales|json_encode|raw }};
+
+            // Get last 7 days
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                salesLabels.push(dayName);
+                salesData.push(dailySales[dateStr] || 0);
+            }
+
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: salesLabels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: salesData,
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'rgba(26, 26, 26, 0.05)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: chartColors.primary,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: chartColors.grid,
+                                borderColor: chartColors.grid
+                            },
+                            ticks: {
+                                color: chartColors.secondary,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: chartColors.secondary,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Category Chart (Doughnut Chart)
+        const categoryCtx = document.getElementById('categoryChart');
+        if (categoryCtx) {
+            // Prepare category data
+            const categoryLabels = [];
+            const categoryData = [];
+            {% for category in category_distribution %}
+                categoryLabels.push('{{ category.category|default('Uncategorized') }}');
+                categoryData.push({{ category.count }});
+            {% endfor %}
+
+            // Default colors for categories
+            const categoryColors = [
+                '#1a1a1a', '#4a4a4a', '#7a7a7a', '#a0a0a0', '#d0d0d0',
+                '#2d3748', '#4a5568', '#718096', '#a0aec0', '#cbd5e0'
+            ];
+
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels.length > 0 ? categoryLabels : ['No Data'],
+                    datasets: [{
+                        data: categoryData.length > 0 ? categoryData : [1],
+                        backgroundColor: categoryColors.slice(0, Math.max(categoryLabels.length, 1)),
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 12,
+                                font: {
+                                    size: 11
+                                },
+                                color: chartColors.secondary
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Revenue Chart (Bar Chart)
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            // Prepare revenue data
+            const revenueLabels = [];
+            const revenueData = [];
+            const monthlyRevenue = {{ monthly_revenue|json_encode|raw }};
+
+            // Get last 6 months
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const key = year + '-' + (month < 10 ? '0' + month : month);
+                const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+                const label = monthName + ' ' + year;
+
+                revenueLabels.push(label);
+                const found = monthlyRevenue.find(item => item.year === year && item.month === month);
+                revenueData.push(found ? found.total : 0);
+            }
+
+            new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{
+                        label: 'Revenue (?)',
+                        data: revenueData,
+                        backgroundColor: chartColors.primary,
+                        borderColor: chartColors.primary,
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#333'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: chartColors.grid,
+                                borderColor: chartColors.grid
+                            },
+                            ticks: {
+                                color: chartColors.secondary,
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    return '?' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: chartColors.secondary,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

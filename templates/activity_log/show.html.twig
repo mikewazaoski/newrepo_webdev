@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Log Details{% endblock %}
+
+{% block body %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: #8B5E3C; margin: 0; font-size: 2.2rem;">📋 Log Details</h1>
+        <a href="{{ path('app_activity_log_index') }}" style="padding: 12px 28px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block;">Back to List</a>
+    </div>
+
+    <div class="card" style="max-width: 800px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666; width: 30%;">ID:</td>
+                <td style="padding: 12px;">{{ log.id }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">User ID:</td>
+                <td style="padding: 12px;">
+                    {% if log.user %}
+                        {{ log.user.id }}
+                    {% else %}
+                        <em style="color: #999;">-</em>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Username:</td>
+                <td style="padding: 12px;">
+                    {% if log.user %}
+                        {{ log.user.username }}<br>
+                        <small style="color: #999;">{{ log.user.email }}</small>
+                    {% else %}
+                        <em style="color: #999;">System</em>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Role:</td>
+                <td style="padding: 12px;">
+                    {% if log.user %}
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                            {% if 'ROLE_ADMIN' in log.user.roles %}background: #f8d7da; color: #721c24;
+                            {% else %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                            {% if 'ROLE_ADMIN' in log.user.roles %}ROLE_ADMIN{% else %}ROLE_STAFF{% endif %}
+                        </span>
+                    {% else %}
+                        <em style="color: #999;">-</em>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Action:</td>
+                <td style="padding: 12px;">
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                        {% if log.action == 'CREATE' %}background: #d4edda; color: #155724;
+                        {% elseif log.action == 'UPDATE' %}background: #fff3cd; color: #856404;
+                        {% elseif log.action == 'DELETE' %}background: #f8d7da; color: #721c24;
+                        {% elseif log.action == 'LOGIN' %}background: #d1ecf1; color: #0c5460;
+                        {% elseif log.action == 'LOGOUT' %}background: #e2e3e5; color: #383d41;
+                        {% else %}background: #f0f0f0; color: #333;{% endif %}">
+                        {{ log.action }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Entity Type:</td>
+                <td style="padding: 12px;">{{ log.entityType }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Entity ID:</td>
+                <td style="padding: 12px;">{{ log.entityId|default('-') }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Description:</td>
+                <td style="padding: 12px;">{{ log.description|default('-') }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Affected Data:</td>
+                <td style="padding: 12px;">
+                    {% if log.affectedData %}
+                        <pre style="background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;">{{ log.affectedData }}</pre>
+                    {% else %}
+                        <em style="color: #999;">No data recorded</em>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">IP Address:</td>
+                <td style="padding: 12px;">{{ log.ipAddress|default('-') }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Date & Time:</td>
+                <td style="padding: 12px;">{{ log.timestamp|date('Y-m-d H:i:s') }}</td>
+            </tr>
+        </table>
+        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+            <strong>Note:</strong> This log is read-only and cannot be modified or deleted.
+        </div>
+    </div>
+</div>
+{% endblock %}
+

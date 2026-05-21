@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+{% endblock %}
+
+{% block body %}
+<div>
+    <h1 style="color: #8B5E3C; margin-bottom: 30px; font-size: 2.2rem;">📋 Activity Logs</h1>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <h2 style="color: #8B5E3C; margin-bottom: 20px; font-size: 1.3rem;">🔍 Filter Logs</h2>
+        <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <label for="user" style="display: block; margin-bottom: 5px; color: #666; font-weight: 500;">User:</label>
+                <select name="user" id="user" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <option value="">All Users</option>
+                    {% for u in users %}
+                        <option value="{{ u.id }}" {% if selected_user and selected_user.id == u.id %}selected{% endif %}>
+                            {{ u.username }} ({{ u.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="action" style="display: block; margin-bottom: 5px; color: #666; font-weight: 500;">Action:</label>
+                <select name="action" id="action" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <option value="">All Actions</option>
+                    <option value="CREATE" {% if selected_action == 'CREATE' %}selected{% endif %}>Create</option>
+                    <option value="UPDATE" {% if selected_action == 'UPDATE' %}selected{% endif %}>Update</option>
+                    <option value="DELETE" {% if selected_action == 'DELETE' %}selected{% endif %}>Delete</option>
+                    <option value="LOGIN" {% if selected_action == 'LOGIN' %}selected{% endif %}>Login</option>
+                    <option value="LOGOUT" {% if selected_action == 'LOGOUT' %}selected{% endif %}>Logout</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="start_date" style="display: block; margin-bottom: 5px; color: #666; font-weight: 500;">Start Date:</label>
+                <input type="date" name="start_date" id="start_date" value="{{ start_date ? start_date|date('Y-m-d') : '' }}" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+            </div>
+            
+            <div>
+                <label for="end_date" style="display: block; margin-bottom: 5px; color: #666; font-weight: 500;">End Date:</label>
+                <input type="date" name="end_date" id="end_date" value="{{ end_date ? end_date|date('Y-m-d') : '' }}" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+            </div>
+            
+            <div style="display: flex; align-items: flex-end;">
+                <button type="submit" class="btn-primary" style="width: 100%;">Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div style="overflow-x: auto;">
+            <table id="activityLogTable" class="display responsive nowrap" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Log ID</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">User ID</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Username</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Role</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Action</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Target Data</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Date & Time</th>
+                        <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in logs %}
+                        {% set log = item.log %}
+                        {% set targetData = item.targetData %}
+                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                            <td style="padding: 12px;">{{ log.id }}</td>
+                            <td style="padding: 12px;">
+                                {% if log.user %}
+                                    {{ log.user.id }}
+                                {% else %}
+                                    <em style="color: #999;">-</em>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                {% if log.user %}
+                                    {{ log.user.username }}<br>
+                                    <small style="color: #999;">{{ log.user.email }}</small>
+                                {% else %}
+                                    <em style="color: #999;">System</em>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                {% if log.user %}
+                                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                                        {% if 'ROLE_ADMIN' in log.user.roles %}background: #f8d7da; color: #721c24;
+                                        {% else %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                                        {% if 'ROLE_ADMIN' in log.user.roles %}ROLE_ADMIN{% else %}ROLE_STAFF{% endif %}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                                    {% if log.action == 'CREATE' %}background: #d4edda; color: #155724;
+                                    {% elseif log.action == 'UPDATE' %}background: #fff3cd; color: #856404;
+                                    {% elseif log.action == 'DELETE' %}background: #f8d7da; color: #721c24;
+                                    {% elseif log.action == 'LOGIN' %}background: #d1ecf1; color: #0c5460;
+                                    {% elseif log.action == 'LOGOUT' %}background: #e2e3e5; color: #383d41;
+                                    {% else %}background: #f0f0f0; color: #333;{% endif %}">
+                                    {{ log.action }}
+                                </span>
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="font-size: 0.9rem; color: #333;">{{ targetData }}</span>
+                            </td>
+                            <td style="padding: 12px; color: #666;">
+                                {{ log.timestamp|date('Y-m-d H:i:s') }}
+                            </td>
+                            <td style="padding: 12px;">
+                                <a href="{{ path('app_activity_log_show', {'id': log.id}) }}" style="color: #8B5E3C; text-decoration: none;" title="View Details (Read-Only)">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="padding: 40px; text-align: center; color: #999;">No logs found</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+            <strong>Note:</strong> Activity logs are read-only. They cannot be modified or deleted.
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#activityLogTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                order: [[0, 'desc']],
+                columnDefs: [
+                    { orderable: false, targets: 7 }
+                ],
+                language: {
+                    search: "Search Logs:",
+                    lengthMenu: "Show _MENU_ logs",
+                    info: "Showing _START_ to _END_ of _TOTAL_ logs",
+                    infoEmpty: "No logs available",
+                    infoFiltered: "(filtered from _MAX_ total logs)",
+                    zeroRecords: "No matching logs found",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                dom: '<"top"lf>rt<"bottom"ip><"clear">'
+            });
+        });
+    </script>
+{% endblock %}
+

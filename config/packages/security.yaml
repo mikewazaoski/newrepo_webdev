@@ -1,0 +1,95 @@
+security:
+    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        # Mobile + registration endpoints (no auth required)
+        api_public:
+            pattern: ^/api/(register|verify-email|resend-verification|mobile/)
+            stateless: true
+            security: false
+
+        api_platform:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                #success_handler: lexik_jwt_authentication.handler.authentication_success
+                #failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            #jwt: ~
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: app_staff_home
+                always_use_default_target_path: false
+                success_handler: App\Security\AuthenticationSuccessHandler
+                enable_csrf: true
+            logout:
+                path: app_logout
+                target: app_home
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800 # 1 week
+                path: /
+                always_remember_me: false
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
+       
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/verify-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/resend-verification, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/health, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/profile, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/products, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/categories, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/customer, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/google-auth, roles: PUBLIC_ACCESS }
+        - { path: ^/about, roles: PUBLIC_ACCESS }
+        - { path: ^/products, roles: PUBLIC_ACCESS }
+        - { path: ^/contact, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/users, roles: ROLE_ADMIN }
+        - { path: ^/admin/logs, roles: ROLE_ADMIN }
+        - { path: ^/admin/dashboard, roles: ROLE_ADMIN }
+        - { path: ^/staff, roles: ROLE_STAFF }
+        - { path: ^/stock, roles: [ROLE_STAFF, ROLE_ADMIN] }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/verfy-email, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: PUBLIC_ACCESS }
+
+when@test:
+    security:
+        password_hashers:
+            # By default, password hashers are resource intensive and take time. This is
+            # important to generate secure password hashes. In tests however, secure hashes
+            # are not important, waste resources and increase test times. The following
+            # reduces the work factor to the lowest possible values.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Add New Customer - Pets Pantry{% endblock %}
+
+{% block body %}
+<div style="padding: 30px; max-width: 700px; margin: 0 auto;">
+    <h1 style="color: #8B5E3C; margin-bottom: 30px; font-size: 2.2rem;">➕ Add New Customer</h1>
+
+    <div class="card" style="padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        {{ form_start(form, {'attr': {'style': 'display: flex; flex-direction: column; gap: 20px;'}}) }}
+            <div>
+                {{ form_label(form.name, null, {'label_attr': {'style': 'display: block; margin-bottom: 8px; color: #555; font-weight: 600;'}}) }}
+                {{ form_widget(form.name, {'attr': {'style': 'width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;', 'onfocus': "this.style.borderColor='#8B5E3C'", 'onblur': "this.style.borderColor='#e0e0e0'"}}) }}
+                {{ form_errors(form.name) }}
+            </div>
+
+            <div>
+                {{ form_label(form.email, null, {'label_attr': {'style': 'display: block; margin-bottom: 8px; color: #555; font-weight: 600;'}}) }}
+                {{ form_widget(form.email, {'attr': {'style': 'width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;', 'onfocus': "this.style.borderColor='#8B5E3C'", 'onblur': "this.style.borderColor='#e0e0e0'"}}) }}
+                {{ form_errors(form.email) }}
+            </div>
+
+            <div>
+                {{ form_label(form.phone, null, {'label_attr': {'style': 'display: block; margin-bottom: 8px; color: #555; font-weight: 600;'}}) }}
+                {{ form_widget(form.phone, {'attr': {'style': 'width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;', 'onfocus': "this.style.borderColor='#8B5E3C'", 'onblur': "this.style.borderColor='#e0e0e0'"}}) }}
+                {{ form_errors(form.phone) }}
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button type="submit" style="padding: 14px 35px; background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(139, 94, 60, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(139, 94, 60, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(139, 94, 60, 0.3)'">
+                    <i class="fas fa-save"></i> Create Customer
+                </button>
+                <a href="{{ path('app_customer_index') }}" style="padding: 14px 35px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block; font-size: 1.1rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#5a6268'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#6c757d'; this.style.transform='translateY(0)'">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,831 @@
+{% extends 'base_landing.html.twig' %}
+
+{% block title %}About Us - The Pet Pantry{% endblock %}
+
+{% block body %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --brown:       #7A4F2E;
+        --brown-light: #A0673A;
+        --cream:       #FAF5ED;
+        --cream-dark:  #F0E6D3;
+        --sand:        #E8D5B7;
+        --text:        #1E1208;
+        --muted:       #7A6A58;
+        --white:       #ffffff;
+        --radius:      18px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background: var(--cream);
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text);
+        overflow-x: hidden;
+    }
+
+    /* ── Utility ─────────────────────────────────── */
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .fade-up {
+        opacity: 0;
+        transform: translateY(36px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ── Hero ──────────────────────────────────────── */
+    .hero {
+        position: relative;
+        min-height: 92vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        text-align: center;
+        padding: 100px 24px 80px;
+    }
+
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 80% 70% at 50% 40%, #e9d4b3 0%, #faf5ed 70%);
+        z-index: 0;
+    }
+
+    .paw {
+        position: absolute;
+        opacity: 0.07;
+        fill: var(--brown);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 760px;
+    }
+
+    .hero-eyebrow {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 500;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--brown);
+        background: var(--sand);
+        padding: 6px 18px;
+        border-radius: 100px;
+        margin-bottom: 28px;
+        animation: fadeDown 0.8s ease both;
+    }
+
+    .hero h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(3rem, 7vw, 5.5rem);
+        font-weight: 700;
+        line-height: 1.06;
+        color: var(--text);
+        margin-bottom: 26px;
+        animation: fadeDown 0.8s 0.15s ease both;
+    }
+
+    .hero h1 em {
+        font-style: italic;
+        color: var(--brown);
+    }
+
+    .hero-sub {
+        font-size: 1.15rem;
+        color: var(--muted);
+        line-height: 1.75;
+        max-width: 560px;
+        margin: 0 auto 44px;
+        animation: fadeDown 0.8s 0.3s ease both;
+    }
+
+    .hero-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--brown);
+        color: var(--white);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 16px 34px;
+        border-radius: 100px;
+        text-decoration: none;
+        letter-spacing: 0.02em;
+        transition: background 0.25s, transform 0.2s;
+        animation: fadeDown 0.8s 0.45s ease both;
+    }
+    .hero-cta:hover {
+        background: var(--brown-light);
+        transform: translateY(-2px);
+    }
+
+    .scroll-indicator {
+        position: absolute;
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        animation: float 2.6s ease-in-out infinite;
+        z-index: 1;
+    }
+    .scroll-indicator span {
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+    .scroll-line {
+        width: 1px;
+        height: 42px;
+        background: linear-gradient(to bottom, var(--brown), transparent);
+    }
+
+    /* ── Stats Bar ─────────────────────────────────── */
+    .stats-bar {
+        background: var(--brown);
+        padding: 48px 24px;
+    }
+
+    .stats-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 32px;
+        text-align: center;
+    }
+
+    .stat-item { color: var(--white); }
+
+    .stat-number {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 8px;
+        color: var(--sand);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.75;
+    }
+
+    /* ── Story ─────────────────────────────────────── */
+    .story-section { padding: 120px 24px; }
+
+    .story-grid {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+    }
+
+    .story-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--brown);
+        margin-bottom: 20px;
+    }
+
+    .story-grid h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 3.5vw, 3rem);
+        line-height: 1.2;
+        margin-bottom: 24px;
+        color: var(--text);
+    }
+
+    .story-grid p {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: var(--muted);
+        margin-bottom: 18px;
+    }
+
+    .story-image-wrap { position: relative; }
+
+    .story-image-frame {
+        border-radius: 24px;
+        overflow: hidden;
+        aspect-ratio: 4/5;
+        background: var(--sand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .story-image-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .story-image-frame:hover img { transform: scale(1.04); }
+
+    .story-badge {
+        position: absolute;
+        bottom: -20px;
+        left: -20px;
+        background: var(--white);
+        border-radius: 18px;
+        padding: 20px 24px;
+        box-shadow: 0 8px 32px rgba(122,79,46,0.15);
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        color: var(--brown);
+        font-style: italic;
+        max-width: 210px;
+        line-height: 1.4;
+    }
+
+    /* ── Values ────────────────────────────────────── */
+    .values-section {
+        background: var(--cream-dark);
+        padding: 110px 24px;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 64px;
+    }
+
+    .section-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 3.5vw, 2.8rem);
+        color: var(--text);
+        margin-bottom: 14px;
+    }
+
+    .section-header p {
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .values-grid {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+    }
+
+    .value-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 36px 30px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1.5px solid transparent;
+    }
+    .value-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 48px rgba(122,79,46,0.1);
+        border-color: var(--sand);
+    }
+
+    .value-icon {
+        font-size: 2rem;
+        margin-bottom: 18px;
+        display: block;
+    }
+
+    .value-card h3 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.25rem;
+        color: var(--text);
+        margin-bottom: 10px;
+    }
+
+    .value-card p {
+        font-size: 0.95rem;
+        color: var(--muted);
+        line-height: 1.7;
+    }
+
+    .value-accent {
+        position: absolute;
+        bottom: 0; left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--brown);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+    .value-card:hover .value-accent { transform: scaleX(1); }
+
+    /* ── Why Us ────────────────────────────────────── */
+    .why-section {
+        padding: 120px 24px;
+        background: var(--white);
+    }
+
+    .why-grid {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+    }
+
+    .why-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .why-item {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .why-num {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        border-radius: 14px;
+        background: var(--cream-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--brown);
+        transition: background 0.25s;
+    }
+    .why-item:hover .why-num { background: var(--sand); }
+
+    .why-text h4 {
+        font-weight: 500;
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+        color: var(--text);
+    }
+    .why-text p {
+        font-size: 0.95rem;
+        color: var(--muted);
+        line-height: 1.65;
+    }
+
+    .why-image-stack {
+        position: relative;
+        height: 480px;
+    }
+
+    .why-img-card {
+        position: absolute;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(122,79,46,0.12);
+    }
+    .why-img-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .card-a {
+        width: 72%; height: 300px;
+        top: 0; left: 0;
+        animation: floatA 5s ease-in-out infinite;
+    }
+    .card-b {
+        width: 60%; height: 260px;
+        bottom: 0; right: 0;
+        animation: floatB 5.5s 0.5s ease-in-out infinite;
+        background: var(--sand);
+    }
+
+    /* ── Team ──────────────────────────────────────── */
+    .team-section {
+        background: var(--cream-dark);
+        padding: 110px 24px;
+    }
+
+    .team-grid {
+        max-width: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 36px;
+    }
+
+    .team-card {
+        background: var(--white);
+        border-radius: 22px;
+        overflow: hidden;
+        text-align: center;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .team-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 24px 56px rgba(122,79,46,0.12);
+    }
+
+    .team-img-wrap {
+        position: relative;
+        overflow: hidden;
+        height: 220px;
+        background: var(--sand);
+    }
+    .team-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .team-card:hover .team-img-wrap img { transform: scale(1.08); }
+
+    .team-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(122,79,46,0.55), transparent);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+    }
+    .team-card:hover .team-overlay { opacity: 1; }
+
+    .team-info { padding: 22px 20px 28px; }
+    .team-info h4 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.15rem;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+    .team-info span {
+        font-size: 0.78rem;
+        font-weight: 500;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--brown);
+    }
+    .team-info p {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 10px;
+        line-height: 1.6;
+    }
+
+    /* ── CTA Banner ────────────────────────────────── */
+    .cta-section {
+        background: var(--brown);
+        padding: 90px 24px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 500px; height: 500px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.04);
+        top: -200px; right: -100px;
+    }
+
+    .cta-section h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        color: var(--white);
+        margin-bottom: 16px;
+        position: relative;
+    }
+    .cta-section p {
+        color: rgba(255,255,255,0.7);
+        font-size: 1.05rem;
+        max-width: 480px;
+        margin: 0 auto 36px;
+        line-height: 1.7;
+        position: relative;
+    }
+
+    .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--white);
+        color: var(--brown);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 500;
+        font-size: 0.95rem;
+        padding: 16px 36px;
+        border-radius: 100px;
+        text-decoration: none;
+        letter-spacing: 0.02em;
+        transition: transform 0.2s, background 0.2s;
+        position: relative;
+    }
+    .cta-btn:hover {
+        background: var(--cream);
+        transform: translateY(-2px);
+    }
+
+    /* ── Keyframes ─────────────────────────────────── */
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50%       { transform: translateX(-50%) translateY(-8px); }
+    }
+    @keyframes floatA {
+        0%, 100% { transform: translateY(0) rotate(-1deg); }
+        50%       { transform: translateY(-10px) rotate(-1deg); }
+    }
+    @keyframes floatB {
+        0%, 100% { transform: translateY(0) rotate(1.5deg); }
+        50%       { transform: translateY(-8px) rotate(1.5deg); }
+    }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 768px) {
+        .story-grid, .why-grid { grid-template-columns: 1fr; gap: 48px; }
+        .why-image-stack { display: none; }
+        .story-image-wrap { order: -1; }
+    }
+</style>
+
+<div>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+
+        <svg class="paw" style="width:160px;top:8%;left:5%;transform:rotate(-20deg)" viewBox="0 0 100 100">
+            <ellipse cx="50" cy="70" rx="22" ry="26"/>
+            <ellipse cx="22" cy="46" rx="10" ry="13"/>
+            <ellipse cx="42" cy="36" rx="10" ry="13"/>
+            <ellipse cx="63" cy="36" rx="10" ry="13"/>
+            <ellipse cx="80" cy="46" rx="10" ry="13"/>
+        </svg>
+        <svg class="paw" style="width:100px;bottom:12%;right:6%;transform:rotate(15deg)" viewBox="0 0 100 100">
+            <ellipse cx="50" cy="70" rx="22" ry="26"/>
+            <ellipse cx="22" cy="46" rx="10" ry="13"/>
+            <ellipse cx="42" cy="36" rx="10" ry="13"/>
+            <ellipse cx="63" cy="36" rx="10" ry="13"/>
+            <ellipse cx="80" cy="46" rx="10" ry="13"/>
+        </svg>
+
+        <div class="hero-content">
+            <span class="hero-eyebrow">Est. 2021 · The Pet Pantry</span>
+            <h1>We care for the ones<br>who <em>can't speak</em> for themselves</h1>
+            <p class="hero-sub">
+                A community-driven shop for pet owners who demand the best — curated products,
+                honest advice, and a love for animals that runs deeper than the leash.
+            </p>
+            <a href="#story" class="hero-cta">
+                Discover our story
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+        </div>
+
+        <div class="scroll-indicator">
+            <span>scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stats-inner">
+            <div class="stat-item fade-up">
+                <div class="stat-number">2k+</div>
+                <div class="stat-label">Happy Customers</div>
+            </div>
+            <div class="stat-item fade-up" style="transition-delay:0.1s">
+                <div class="stat-number">150+</div>
+                <div class="stat-label">Curated Products</div>
+            </div>
+            <div class="stat-item fade-up" style="transition-delay:0.2s">
+                <div class="stat-number">4.9★</div>
+                <div class="stat-label">Average Rating</div>
+            </div>
+            <div class="stat-item fade-up" style="transition-delay:0.3s">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Years Serving Pets</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STORY -->
+    <section class="story-section" id="story">
+        <div class="story-grid container">
+            <div class="fade-up">
+                <p class="story-label">Our origin</p>
+                <h2>Started with a rescue dog and a lot of questions</h2>
+                <p>
+                    When our founder Marco brought home a three-legged rescue named Mango,
+                    finding quality, trustworthy pet supplies felt impossible. Too many options,
+                    too little guidance, and no community to lean on.
+                </p>
+                <p>
+                    The Pet Pantry was born from that frustration. We set out to build a place
+                    that felt warm, knowledgeable, and genuinely passionate about animal welfare —
+                    not just another store.
+                </p>
+                <p>
+                    Today, we curate every product ourselves, engage with our community daily,
+                    and donate a portion of every purchase to local animal shelters.
+                </p>
+            </div>
+            <div class="story-image-wrap fade-up" style="transition-delay:0.2s">
+                <div class="story-image-frame">
+                    <img src="{{ asset('image/mand.png') }}" alt="Our Story">
+                </div>
+                <div class="story-badge">"Every pet deserves a pantry full of love."</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VALUES -->
+    <section class="values-section">
+        <div class="container">
+            <div class="section-header fade-up">
+                <p class="story-label">What drives us</p>
+                <h2>Our values, plain and simple</h2>
+                <p>Four principles that shape every product we carry and every word we write.</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card fade-up" style="transition-delay:0.05s">
+                    <span class="value-icon">🐾</span>
+                    <h3>Animals first</h3>
+                    <p>Every decision starts with the wellbeing of the animals in your life — not margins, trends, or shortcuts.</p>
+                    <div class="value-accent"></div>
+                </div>
+                <div class="value-card fade-up" style="transition-delay:0.15s">
+                    <span class="value-icon">🔍</span>
+                    <h3>Radical honesty</h3>
+                    <p>We only stock what we'd genuinely give our own pets. If it doesn't meet our bar, it doesn't make the shelf.</p>
+                    <div class="value-accent"></div>
+                </div>
+                <div class="value-card fade-up" style="transition-delay:0.25s">
+                    <span class="value-icon">🤝</span>
+                    <h3>Community above all</h3>
+                    <p>Our platform grows with you. Reviews, tips, and stories from real owners shape what we do next.</p>
+                    <div class="value-accent"></div>
+                </div>
+                <div class="value-card fade-up" style="transition-delay:0.35s">
+                    <span class="value-icon">🌱</span>
+                    <h3>Sustainable care</h3>
+                    <p>We prioritise eco-conscious products and packaging so the world your pet explores stays beautiful.</p>
+                    <div class="value-accent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY US -->
+    <section class="why-section">
+        <div class="why-grid container">
+            <div class="why-image-stack fade-up">
+                <div class="why-img-card card-a">
+                    <img src="{{ asset('image/run.png') }}" alt="Happy Pets">
+                </div>
+                <div class="why-img-card card-b">
+                    <img src="{{ asset('image/oww.jpg') }}" alt="Products">
+                </div>
+            </div>
+            <div class="fade-up" style="transition-delay:0.15s">
+                <p class="story-label">Why choose us</p>
+                <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,3.5vw,2.8rem);margin-bottom:36px;color:var(--text)">A pantry worth trusting</h2>
+                <ul class="why-list">
+                    <li class="why-item">
+                        <div class="why-num">01</div>
+                        <div class="why-text">
+                            <h4>Hand-tested products</h4>
+                            <p>Every item goes through our own quality review before it ever appears on the site.</p>
+                        </div>
+                    </li>
+                    <li class="why-item">
+                        <div class="why-num">02</div>
+                        <div class="why-text">
+                            <h4>Shelter partnerships</h4>
+                            <p>5% of every purchase goes directly to partner animal shelters in your region.</p>
+                        </div>
+                    </li>
+                    <li class="why-item">
+                        <div class="why-num">03</div>
+                        <div class="why-text">
+                            <h4>Real human support</h4>
+                            <p>No bots. Questions about your pet? Our team actually knows what they're talking about.</p>
+                        </div>
+                    </li>
+                    <li class="why-item">
+                        <div class="why-num">04</div>
+                        <div class="why-text">
+                            <h4>Always improving</h4>
+                            <p>We listen to feedback, iterate constantly, and publish change logs for our community.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="team-section">
+        <div class="container">
+            <div class="section-header fade-up">
+                <p class="story-label">The Pack</p>
+                <h2>Meet the humans behind the treats</h2>
+                <p>A small, passionate team united by one thing: a slightly unhealthy love of animals.</p>
+            </div>
+            <div class="team-grid">
+                <div class="team-card fade-up" style="transition-delay:0.05s">
+                    <div class="team-img-wrap">
+                        <img src="{{ asset('image/kit.jpg') }}" alt="Khyth Ovalo">
+                        <div class="team-overlay"></div>
+                    </div>
+                    <div class="team-info">
+                        <h4>Khyth Ovalo</h4>
+                        <span>Food Specialist</span>
+                        <p>Rescued-dog parent. Obsessive label reader. Believes every pantry should start with love.</p>
+                    </div>
+                </div>
+                <div class="team-card fade-up" style="transition-delay:0.15s">
+                    <div class="team-img-wrap">
+                        <img src="{{ asset('image/miko.jpg') }}" alt="Mike Marco">
+                        <div class="team-overlay"></div>
+                    </div>
+                    <div class="team-info">
+                        <h4>Mike Marco</h4>
+                        <span>Founder of the Pet Pantry</span>
+                        <p>Certified in animal nutrition. If it's on our shelf, Mike has put it through its paces first.</p>
+                    </div>
+                </div>
+                <div class="team-card fade-up" style="transition-delay:0.25s">
+                    <div class="team-img-wrap">
+                        <img src="{{ asset('image/jims.jpg') }}" alt="Jhames Jucom">
+                        <div class="team-overlay"></div>
+                    </div>
+                    <div class="team-info">
+                        <h4>Jhames Jucom</h4>
+                        <span>Community & Support</span>
+                        <p>Three cats, zero patience for unhelpful answers. The heart of our customer community.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2 class="fade-up">Ready to spoil your pet?</h2>
+        <p class="fade-up" style="transition-delay:0.1s">Browse our curated selection and discover why thousands of pet owners call The Pet Pantry their first stop.</p>
+        <a href="/products" class="cta-btn fade-up" style="transition-delay:0.2s">
+            Shop the Pantry
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </section>
+
+</div>
+
+<script>
+(function () {
+    const els = document.querySelectorAll('.fade-up');
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                io.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    els.forEach(el => io.observe(el));
+})();
+</script>
+
+{% endblock %}

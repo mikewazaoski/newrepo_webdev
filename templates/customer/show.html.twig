@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ customer.name }} - Customer Details{% endblock %}
+
+{% block body %}
+<div style="padding: 30px; max-width: 900px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: #8B5E3C; margin: 0; font-size: 2.2rem;">👤 Customer Details</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ path('app_customer_edit', {'id': customer.id}) }}" style="padding: 12px 28px; background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-block;">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ path('app_customer_index') }}" style="padding: 12px 28px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; width: 30%; border-bottom: 1px solid #e0e0e0;">ID:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.id }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0;">Name:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.name }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0;">Email:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.email }}</td>
+            </tr>
+            {% if customer.customerName %}
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0;">Customer Name:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.customerName }}</td>
+            </tr>
+            {% endif %}
+            {% if customer.username %}
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0;">Username:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.username }}</td>
+            </tr>
+            {% endif %}
+            {% if customer.orders|length > 0 %}
+            <tr>
+                <td style="padding: 15px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0;">Total Orders:</td>
+                <td style="padding: 15px; border-bottom: 1px solid #e0e0e0;">{{ customer.orders|length }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+            {{ include('customer/_delete_form.html.twig') }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

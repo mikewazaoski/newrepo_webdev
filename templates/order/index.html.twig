@@ -1,0 +1,581 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Orders - The Pet Pantry{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+{% endblock %}
+
+{% block body %}
+<style>
+    .orders-container {
+        padding: 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Section */
+    .orders-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .orders-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #3E2723;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-add {
+        background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 10px rgba(139, 94, 60, 0.3);
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 16px rgba(139, 94, 60, 0.4);
+    }
+
+    /* Stats Overview */
+    .orders-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-box {
+        background: white;
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: 0 2px 10px rgba(139, 94, 60, 0.08);
+        border-left: 3px solid;
+        transition: all 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 12px rgba(139, 94, 60, 0.12);
+    }
+
+    .stat-box.pending { border-left-color: #FF9800; }
+    .stat-box.completed { border-left-color: #4CAF50; }
+    .stat-box.cancelled { border-left-color: #F44336; }
+    .stat-box.total { border-left-color: #2196F3; }
+
+    .stat-box h3 {
+        font-size: 0.75rem;
+        color: #8B5E3C;
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .stat-box .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #3E2723;
+        margin: 0;
+    }
+
+    /* DataTable Container */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 3px 16px rgba(139, 94, 60, 0.08);
+        border: 1px solid rgba(139, 94, 60, 0.1);
+        overflow: hidden;
+        padding: 20px;
+    }
+
+    /* DataTables Custom Styling */
+    .dataTables_wrapper {
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        padding: 6px 12px;
+        border: 1px solid rgba(139, 94, 60, 0.2);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #3E2723;
+        background: white;
+        margin: 0 5px;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 8px 14px;
+        border: 1px solid rgba(139, 94, 60, 0.2);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #3E2723;
+        background: white;
+        margin-left: 8px;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        outline: none;
+        border-color: #8B5E3C;
+        box-shadow: 0 0 0 2px rgba(139, 94, 60, 0.1);
+    }
+
+    /* Table Styles */
+    table.dataTable {
+        width: 100% !important;
+        border-collapse: collapse;
+        margin-top: 10px !important;
+    }
+
+    table.dataTable thead {
+        background: linear-gradient(135deg, #8B5E3C 0%, #A0724E 100%);
+        color: white;
+    }
+
+    table.dataTable thead th {
+        padding: 12px 16px !important;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        border-bottom: none !important;
+    }
+
+    table.dataTable tbody tr {
+        border-bottom: 1px solid rgba(139, 94, 60, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    table.dataTable tbody tr:hover {
+        background: rgba(139, 94, 60, 0.03) !important;
+    }
+
+    table.dataTable tbody td {
+        padding: 12px 16px !important;
+        font-size: 0.85rem;
+        color: #3E2723;
+    }
+
+    /* Order ID Badge */
+    .order-id {
+        font-weight: 600;
+        color: #8B5E3C;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .status-badge.pending {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    .status-badge.processing {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .status-badge.completed {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .status-badge.cancelled {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .status-badge.delivered {
+        background: #F3E5F5;
+        color: #6A1B9A;
+    }
+
+    .status-badge.shipped {
+        background: #E8F5E9;
+        color: #1B5E20;
+    }
+
+    .status-badge.paid {
+        background: #E8F5E9;
+        color: #1B5E20;
+    }
+
+    .status-badge.unpaid {
+        background: #FFF8E1;
+        color: #F57F17;
+    }
+
+    .btn-approve {
+        background: #E8F5E9;
+        color: #2E7D32;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-approve:hover {
+        background: #C8E6C9;
+    }
+
+    .btn-reject {
+        background: #FFEBEE;
+        color: #C62828;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-reject:hover {
+        background: #FFCDD2;
+    }
+
+    .ref-tag {
+        font-size: 0.7rem;
+        color: #6D4C41;
+        font-family: monospace;
+    }
+
+    /* Price Display */
+    .price {
+        font-weight: 600;
+        color: #2E7D32;
+        font-size: 0.85rem;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-action {
+        padding: 5px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .btn-view {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .btn-view:hover {
+        background: #BBDEFB;
+        transform: translateY(-1px);
+    }
+
+    .btn-edit {
+        background: #FFF3E0;
+        color: #E65100;
+    }
+
+    .btn-edit:hover {
+        background: #FFE0B2;
+        transform: translateY(-1px);
+    }
+
+    /* DataTables Pagination */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 6px 12px !important;
+        margin: 0 2px;
+        border-radius: 6px !important;
+        border: 1px solid rgba(139, 94, 60, 0.2) !important;
+        background: white !important;
+        color: #6D4C41 !important;
+        font-size: 0.85rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #8B5E3C !important;
+        color: white !important;
+        border-color: #8B5E3C !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #8B5E3C !important;
+        color: white !important;
+        border-color: #8B5E3C !important;
+    }
+
+    /* DataTables Info */
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.85rem;
+        color: #6D4C41;
+        padding-top: 10px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: #8B5E3C;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.2rem;
+        color: #3E2723;
+        margin: 0 0 8px 0;
+    }
+
+    .empty-state p {
+        margin: 0 0 20px 0;
+        font-size: 0.9rem;
+        color: #6D4C41;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .orders-container {
+            padding: 16px;
+        }
+
+        .orders-header h1 {
+            font-size: 1.4rem;
+        }
+
+        .orders-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .table-container {
+            padding: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .orders-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="orders-container">
+    <!-- Header -->
+    <div class="orders-header">
+        <h1><i class="fas fa-shopping-cart"></i> Orders Management</h1>
+        <div class="header-actions">
+            <a href="{{ path('app_order_new') }}" class="btn-add">
+                <i class="fas fa-plus"></i> New Order
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="orders-stats">
+        <div class="stat-box total">
+            <h3>Total Orders</h3>
+            <p class="stat-value">{{ orders|length }}</p>
+        </div>
+        <div class="stat-box pending">
+            <h3>Pending</h3>
+            <p class="stat-value">{{ orders|filter(o => o.status|lower == 'pending')|length }}</p>
+        </div>
+        <div class="stat-box completed">
+            <h3>Shipped</h3>
+            <p class="stat-value">{{ orders|filter(o => o.status|lower == 'shipped')|length }}</p>
+        </div>
+        <div class="stat-box cancelled">
+            <h3>Cancelled</h3>
+            <p class="stat-value">{{ orders|filter(o => o.status|lower == 'cancelled')|length }}</p>
+        </div>
+    </div>
+
+    <!-- Orders DataTable -->
+    <div class="table-container">
+        {% if orders|length > 0 %}
+            <table id="ordersTable" class="display responsive nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Ref</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td><span class="order-id">#{{ order.id }}</span></td>
+                        <td>
+                            {% if order.orderRef %}
+                                <span class="ref-tag" title="{{ order.orderRef }}">📱 {{ order.orderRef|slice(0, 8) }}…</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{% if order.customer is not null and order.customer.id is defined and order.customer.id != 0 %}{{ order.customer.name }}{% else %}N/A{% endif %}</td>
+                        <td>{{ order.productName }}</td>
+                        <td>{{ order.quantity }}</td>
+                        <td><span class="price">₱{{ (order.quantity * order.price)|number_format(2) }}</span></td>
+                        <td>
+                            <span class="status-badge {{ order.paymentStatus|default('unpaid')|lower }}">
+                                {{ order.paymentMethod|default('—')|upper }} / {{ order.paymentStatus|default('unpaid') }}
+                            </span>
+                            {% if order.paymentReference %}
+                                <br><span class="ref-tag">{{ order.paymentReference }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge {{ order.status|lower }}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td data-order="{{ order.orderDate|date('Y-m-d') }}">{{ order.orderDate|date('M d, Y') }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if order.paymentStatus|default('unpaid') != 'paid' %}
+                                    <form method="post" action="{{ path('app_order_mark_paid', {'id': order.id}) }}" style="display:inline;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('order_action' ~ order.id) }}">
+                                        <button type="submit" class="btn-action btn-view" title="Mark payment received">
+                                            <i class="fas fa-money-bill-wave"></i> Paid
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if order.status|lower == 'pending' %}
+                                    <form method="post" action="{{ path('app_order_approve', {'id': order.id}) }}" style="display:inline;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('order_action' ~ order.id) }}">
+                                        <button type="submit" class="btn-action btn-approve" title="Approve & ship">
+                                            <i class="fas fa-check"></i> Ship
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{{ path('app_order_reject', {'id': order.id}) }}" style="display:inline;" onsubmit="return confirm('Cancel this order?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('order_action' ~ order.id) }}">
+                                        <button type="submit" class="btn-action btn-reject" title="Reject / cancel">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <a href="{{ path('app_order_show', {'id': order.id}) }}" class="btn-action btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-action btn-edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>No Orders Yet</h3>
+                <p>Start by creating your first order</p>
+                <a href="{{ path('app_order_new') }}" class="btn-add">
+                    <i class="fas fa-plus"></i> Create First Order
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#ordersTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                order: [[0, 'desc']], // Sort by Order ID descending
+                columnDefs: [
+                    { orderable: false, targets: 9 } // Disable sorting on Actions column
+                ],
+                language: {
+                    search: "Search Orders:",
+                    lengthMenu: "Show _MENU_ orders",
+                    info: "Showing _START_ to _END_ of _TOTAL_ orders",
+                    infoEmpty: "No orders available",
+                    infoFiltered: "(filtered from _MAX_ total orders)",
+                    zeroRecords: "No matching orders found",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                dom: '<"top"lf>rt<"bottom"ip><"clear">',
+                initComplete: function() {
+                    console.log('DataTable initialized successfully');
+                }
+            });
+        });
+    </script>
+{% endblock %}

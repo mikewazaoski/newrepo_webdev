@@ -1,0 +1,14 @@
+# Railway deployment config — https://docs.railway.app/reference/config-as-code
+# Set env vars in the Railway dashboard (DATABASE_URL, APP_SECRET, etc.)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+# Port 8080 is set in Dockerfile (ENV PORT=8080) and entrypoint.sh (${PORT:-8080})
+# In Railway → Service → Settings → Networking, use port 8080 if prompted

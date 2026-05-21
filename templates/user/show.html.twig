@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}User Details{% endblock %}
+
+{% block body %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: #8B5E3C; margin: 0; font-size: 2.2rem;">👤 User Details</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ path('app_user_edit', {'id': user.id}) }}" class="btn-primary" style="text-decoration: none; display: inline-block;">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ path('app_user_index') }}" style="padding: 12px 28px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block;">Back to List</a>
+        </div>
+    </div>
+
+    <div class="card" style="max-width: 600px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666; width: 40%;">ID:</td>
+                <td style="padding: 12px;">{{ user.id }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Username:</td>
+                <td style="padding: 12px;">{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Email:</td>
+                <td style="padding: 12px;">{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Name:</td>
+                <td style="padding: 12px;">{{ user.name }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Role:</td>
+                <td style="padding: 12px;">
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                        {% if 'ROLE_ADMIN' in user.roles %}background: #f8d7da; color: #721c24;
+                        {% else %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                        {% if 'ROLE_ADMIN' in user.roles %}Admin{% else %}Staff{% endif %}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Status:</td>
+                <td style="padding: 12px;">
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;
+                        {% if user.isActive %}background: #d4edda; color: #155724;
+                        {% else %}background: #f8d7da; color: #721c24;{% endif %}">
+                        {% if user.isActive %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 12px; font-weight: 600; color: #666;">Date Created:</td>
+                <td style="padding: 12px;">{{ user.createdAt|date('Y-m-d H:i:s') }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

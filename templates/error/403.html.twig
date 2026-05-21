@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Access Denied{% endblock %}
+
+{% block body %}
+<div style="text-align: center; padding: 60px 20px;">
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #dc3545; font-size: 4rem; margin: 0 0 20px 0;">403</h1>
+        <h2 style="color: #8B5E3C; margin-bottom: 20px;">Access Denied</h2>
+        <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+            You don't have permission to access this resource.
+        </p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="{{ path('app_home') }}" class="btn-primary" style="text-decoration: none; display: inline-block;">
+                <i class="fas fa-home"></i> Go to Dashboard
+            </a>
+            <a href="{{ path('app_logout') }}" style="padding: 12px 28px; background: #6c757d; color: white; text-decoration: none; border-radius: 10px; display: inline-block;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

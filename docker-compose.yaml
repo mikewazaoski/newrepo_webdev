@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: pets_root_password
+      MYSQL_DATABASE: pets_db
+      MYSQL_USER: pets_user
+      MYSQL_PASSWORD: pets_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - pets_network
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: pets_user
+      PMA_PASSWORD: pets_password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - pets_network
+
+volumes:
+  mysql_data:
+
+networks:
+  pets_network:
