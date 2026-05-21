@@ -106,7 +106,7 @@ function normalizeDatabaseUrl(string $url): string
         parse_str($parts['query'], $query);
     }
 
-    $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
+    $query += ['serverVersion' => '8.0.31', 'charset' => 'utf8mb4'];
 
     $host = $parts['host'] ?? '';
     if (

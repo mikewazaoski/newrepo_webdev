@@ -16,10 +16,10 @@ php bin/railway-env.php
 eval "$(php bin/railway-env.php --shell)"
 # Symfony reads /app/.env.local.php; PHP-FPM keeps container env via clear_env=no
 
-mkdir -p var/cache var/log public/uploads/images /tmp/petpantry-sessions
+mkdir -p var/cache var/log public/uploads/images public/bundles /tmp/petpantry-sessions
 chmod 644 .env .env.local.php 2>/dev/null || true
-chown -R www-data:www-data var public/uploads .env .env.local.php /tmp/petpantry-sessions 2>/dev/null || true
-chmod -R 775 var /tmp/petpantry-sessions 2>/dev/null || true
+chown -R www-data:www-data var public .env .env.local.php /tmp/petpantry-sessions 2>/dev/null || true
+chmod -R 775 var public/bundles /tmp/petpantry-sessions 2>/dev/null || true
 
 if [ -z "${APP_SECRET:-}" ]; then
     echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
@@ -45,7 +45,7 @@ su -s /bin/sh www-data -c "cd /app && php bin/console assets:install public --en
 
 if [ -n "${DATABASE_URL:-}" ]; then
     echo "Checking database connection..."
-    if su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null; then
+    if su -s /bin/sh www-data -c "cd /app && php bin/console dbal:run-sql 'SELECT 1' --env=${APP_ENV:-prod} --quiet" 2>/dev/null; then
         echo "Running database migrations..."
         su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=${APP_ENV:-prod}" || \
             echo "WARNING: Migrations failed."
@@ -54,7 +54,7 @@ if [ -n "${DATABASE_URL:-}" ]; then
         echo "WARNING: Cannot connect to database."
         echo "  Railway: add MySQL service, then set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service."
         echo "  Remove any DATABASE_URL pointing to 127.0.0.1, localhost, or @mysql: (Docker-only)."
-        su -s /bin/sh www-data -c "cd /app && php bin/console doctrine:query:sql 'SELECT 1' --env=${APP_ENV:-prod}" 2>&1 || true
+        su -s /bin/sh www-data -c "cd /app && php bin/console dbal:run-sql 'SELECT 1' --env=${APP_ENV:-prod}" 2>&1 || true
     fi
 else
     echo "WARNING: No DATABASE_URL — skipping migrations."
