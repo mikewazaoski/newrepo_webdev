@@ -5,8 +5,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
-Request ::setTrustedProxies(
-    proxies: ['0.0.0./0'],
+Request::setTrustedProxies(
+    proxies: ['0.0.0.0/0'],
     trustedHeaderSet: Request::HEADER_X_FORWARDED_FOR 
     | Request::HEADER_X_FORWARDED_HOST
     | Request::HEADER_X_FORWARDED_PORT

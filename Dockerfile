@@ -66,6 +66,7 @@ RUN mkdir -p var/cache var/log public/uploads/images \
 
 COPY docker/nginx/nginx-main.conf /etc/nginx/nginx.conf
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/php-fpm/zz-railway.conf /usr/local/etc/php-fpm.d/zz-railway.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
