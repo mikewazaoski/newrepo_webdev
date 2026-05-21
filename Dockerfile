@@ -46,20 +46,26 @@ COPY --from=vendor /app /app
 RUN npm ci && npm run build
 
 # ---- Production image (PHP-FPM + Nginx) ----
-FROM php:8.2-fpm-alpine AS app
+# Debian-based image: more reliable extension builds on Railway than Alpine apk
+FROM php:8.2-fpm-bookworm AS app
 
-RUN apk add --no-cache \
-    nginx \
-    icu-dev \
-    libzip-dev \
-    oniguruma-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        nginx \
+        libicu-dev \
+        libzip-dev \
+        zlib1g-dev \
+        libpng-dev \
+        libonig-dev \
+        libxml2-dev \
+        default-libmysqlclient-dev \
     && docker-php-ext-configure intl \
     && docker-php-ext-install -j"$(nproc)" \
         intl \
         opcache \
         pdo_mysql \
         zip \
-    && rm -rf /var/cache/apk/*
+    && apt-get purge -y --auto-remove \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /usr/src/php*
 
 # Opcache for production
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
