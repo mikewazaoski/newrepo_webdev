@@ -58,16 +58,11 @@ if [ -n "${DATABASE_URL:-}" ]; then
         echo "ERROR: Cannot connect to database."
         echo "  Railway: add MySQL, set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service (remove 127.0.0.1 / @mysql: URLs)."
         echo "  Docker:  DATABASE_URL=mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4"
-        if [ -n "${RAILWAY_ENVIRONMENT:-}${RAILWAY_PROJECT_ID:-}" ]; then
-            exit 1
-        fi
+        echo "WARNING: App will start; login requires a working DATABASE_URL=\${{MySQL.MYSQL_URL}}."
     fi
 else
     echo "WARNING: No DATABASE_URL / MYSQL_URL — skipping migrations."
-    if [ -n "${RAILWAY_ENVIRONMENT:-}${RAILWAY_PROJECT_ID:-}" ]; then
-        echo "ERROR: Railway deploy requires a valid DATABASE_URL (use \${{MySQL.MYSQL_URL}}, not 127.0.0.1 or @mysql:)."
-        exit 1
-    fi
+    echo "  Railway: set DATABASE_URL=\${{MySQL.MYSQL_URL}} on the app service (remove Docker 127.0.0.1 / @mysql: URLs)."
 fi
 
 mkdir -p var/cache var/log var/sessions public/uploads/images

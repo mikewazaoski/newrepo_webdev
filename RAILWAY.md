@@ -69,6 +69,7 @@ Do **not** copy the raw URL by hand unless necessary — references stay in sync
 | `Unable to read "/app/.env"` | Redeploy latest image (entrypoint creates `.env` at startup). |
 | Migrations fail | Check deploy logs; ensure MySQL and app are in the **same Railway project**. |
 | **500 on /login** (or all pages) | Set `DEFAULT_URI` to your HTTPS domain, or redeploy latest code (`bin/railway-env.php` auto-fills it). Ensure deploy logs show **cache warmup OK** (not suppressed). Set `DATABASE_URL=\${{MySQL.MYSQL_URL}}`. |
+| **Healthcheck failure** on deploy | Fixed: Railway uses `/health` (app up). After deploy, open `/api/mobile/health` — must show `"database":"connected"` before login works. |
 | 502 / app not listening | Railway sets `PORT` automatically — do not hardcode Docker port 8080 in variables. |
 
 ## Optional: persistent uploads
