@@ -43,7 +43,8 @@ function resolveDatabaseUrlFromMysqlVars(): ?string
 
 function resolveDatabaseUrl(): ?string
 {
-    foreach (['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PRIVATE_URL', 'MYSQL_PUBLIC_URL'] as $name) {
+    // Prefer private network URL (no SSL) when app and MySQL are in the same Railway project
+    foreach (['MYSQL_PRIVATE_URL', 'DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL'] as $name) {
         $url = env($name);
         if ($url !== null && !isLocalDockerDatabaseUrl($url)) {
             return $url;
@@ -81,18 +82,12 @@ function normalizeDatabaseUrl(string $url): string
     $query += ['serverVersion' => '8.0', 'charset' => 'utf8mb4'];
 
     $host = $parts['host'] ?? '';
-    if (
-        is_string($host)
-        && $host !== ''
-        && !str_ends_with($host, '.railway.internal')
-        && (str_contains($host, 'railway') || str_contains($host, 'rlwy.net'))
-        && !isset($query['ssl-mode'])
-    ) {
-        // Railway public MySQL proxy requires SSL from PHP PDO
-        $query['ssl-mode'] = 'REQUIRED';
+    if (is_string($host) && str_ends_with($host, '.railway.internal')) {
+        $query['ssl-mode'] = 'DISABLED';
     }
 
     $parts['query'] = http_build_query($query);
+
 
     $scheme = $parts['scheme'] ?? 'mysql';
     $user = $parts['user'] ?? '';
@@ -201,7 +196,11 @@ writeRequired($lines, 'APP_DEBUG', $appDebug);
 writeRequired($lines, 'APP_SECRET', $appSecret);
 writeRequired($lines, 'TRUSTED_PROXIES', env('TRUSTED_PROXIES', 'REMOTE_ADDR'));
 writeRequired($lines, 'DEFAULT_URI', $defaultUri);
-writeRequired($lines, 'MESSENGER_TRANSPORT_DSN', env('MESSENGER_TRANSPORT_DSN', 'doctrine://default?auto_setup=0'));
+$messengerDsn = env('MESSENGER_TRANSPORT_DSN');
+if ($messengerDsn === null && (env('RAILWAY_ENVIRONMENT') !== null || env('RAILWAY_PROJECT_ID') !== null)) {
+    $messengerDsn = 'sync://';
+}
+writeRequired($lines, 'MESSENGER_TRANSPORT_DSN', $messengerDsn ?? 'doctrine://default?auto_setup=0');
 writeRequired($lines, 'MAILER_DSN', env('MAILER_DSN', 'null://null'));
 writeRequired($lines, 'CORS_ALLOW_ORIGIN', $corsOrigin);
 writeRequired($lines, 'GOOGLE_CLIENT_ID', $googleClientId);

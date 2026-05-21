@@ -37,7 +37,7 @@ when@prod:
     doctrine:
         dbal:
             server_version: '8.0'
-            # Railway MySQL uses SSL; skip cert verification (no CA bundle in container)
+            # Railway: public proxy needs SSL (verify off); private .railway.internal uses ssl-mode=DISABLED in DATABASE_URL
             options:
                 !php/const PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT: false
         orm:

@@ -2,6 +2,8 @@
 
 ## Quick setup (required)
 
+Copy variables from [railway.env.example](railway.env.example) into the **app service** (not MySQL).
+
 1. **New Project** → Deploy from GitHub → this repo.
 2. **Add MySQL** (`+ New` → Database → MySQL). Note the service name (e.g. `MySQL`).
 3. On the **app service** (not MySQL), open **Variables** and add:

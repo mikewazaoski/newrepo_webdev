@@ -50,6 +50,7 @@ RUN npm ci && npm run build
 FROM php:8.2-fpm-bookworm AS app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
         nginx \
         libicu-dev \
         libzip-dev \
@@ -86,7 +87,8 @@ COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/php-fpm/zz-railway.conf /usr/local/etc/php-fpm.d/zz-railway.conf
 COPY entrypoint.sh /entrypoint.sh
 # Fix Windows CRLF line endings so Linux can execute the script
-RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh \
+    && sed -i 's/\r$//' /app/bin/write-fpm-env.php && chmod +x /app/bin/write-fpm-env.php
 
 ENV APP_ENV=prod \
     APP_DEBUG=0 \

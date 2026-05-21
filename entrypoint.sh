@@ -14,8 +14,16 @@ cd /app
 # Resolve MYSQL_URL / MYSQLHOST → DATABASE_URL and write /app/.env for Symfony + PHP-FPM
 php bin/railway-env.php
 eval "$(php bin/railway-env.php --shell)"
+php bin/write-fpm-env.php
 chmod 644 .env 2>/dev/null || true
 chown www-data:www-data .env 2>/dev/null || true
+
+if [ -n "${DATABASE_URL:-}" ]; then
+    DB_HOST=$(php -r 'echo parse_url(getenv("DATABASE_URL"), PHP_URL_HOST) ?: "unknown";')
+    echo "Database target host: ${DB_HOST}"
+else
+    echo "WARNING: DATABASE_URL is empty after railway-env.php"
+fi
 
 if [ -z "${APP_SECRET:-}" ]; then
     echo "WARNING: APP_SECRET is not set. Add a random secret in Railway → app service → Variables."
