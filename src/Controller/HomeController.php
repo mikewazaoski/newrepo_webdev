@@ -12,15 +12,17 @@ final class HomeController extends AbstractController
     #[Route('/', name: 'app_home', methods: ['GET'])]
     public function index(): Response
     {
-        // Check if user is authenticated and redirect to appropriate dashboard
-        if ($this->getUser()) {
+        try {
             $user = $this->getUser();
-            
-            // Redirect admins to admin dashboard, others to staff dashboard
+        } catch (\Throwable) {
+            $user = null;
+        }
+
+        if ($user) {
             if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
                 return $this->redirectToRoute('app_admin_dashboard');
             }
-            
+
             return $this->redirectToRoute('app_staff_home');
         }
         

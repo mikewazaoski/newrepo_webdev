@@ -21,6 +21,11 @@ framework:
     #esi: true
     #fragments: true
 
+when@prod:
+    framework:
+        session:
+            save_path: '/tmp/petpantry-sessions'
+
 when@test:
     framework:
         test: true
