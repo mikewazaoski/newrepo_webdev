@@ -16,8 +16,8 @@ if ($LASTEXITCODE -eq 0) {
     docker compose up -d
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
-        Write-Host "Pet Pantry:  http://localhost" -ForegroundColor Green
-        Write-Host "Login:       http://localhost/login" -ForegroundColor Green
+        Write-Host "Pet Pantry:  http://localhost:8080" -ForegroundColor Green
+        Write-Host "Login:       http://localhost:8080/login" -ForegroundColor Green
         Write-Host "phpMyAdmin:  http://localhost:8081" -ForegroundColor Green
         docker compose ps
     }

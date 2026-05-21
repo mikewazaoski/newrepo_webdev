@@ -1,89 +1,71 @@
-# Docker deployment (Pet Pantry)
+# Docker + MySQL (Pet Pantry)
 
-Run the full stack locally: **Symfony app**, **MySQL**, and **phpMyAdmin**.
+Run the app with **Docker only** — no XAMPP, no local PHP, no local MySQL install.
 
-## Prerequisites
+## Requirements
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) or Docker Engine + Compose (Linux)
-- At least **4 GB RAM** free for Docker (first build compiles PHP extensions and runs `npm run build`)
-- **No Apache on port 80** — if you see `Apache/2.4.58 (Win64)` errors, run **`Run-Fix-As-Admin.bat`** (or right‑click `FIX-LOCALHOST-LOGIN.ps1` → Run as administrator)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) running
 
-## Quick start
+## Start
 
-From the project root:
-
-```bash
-docker compose up --build -d
+```powershell
+cd D:\Desktop\pantry\pets
+docker compose up -d
 ```
 
-First build may take **10–20 minutes**. Later starts are much faster.
+Or double-click / run:
+
+```powershell
+.\start-docker.ps1
+```
+
+First build takes 10–20 minutes. Later starts are fast.
 
 ## URLs
 
-| Service | URL |
-|---------|-----|
-| **Pet Pantry app** | http://localhost |
-| **Login page** | http://localhost/login |
-| **Alternate port** | http://localhost:8080 |
-| **phpMyAdmin** | http://localhost:8081 |
-| **MySQL** (from host) | `127.0.0.1:3307` |
+| What | URL |
+|------|-----|
+| **Home** | http://localhost:8080 |
+| **Login** | http://localhost:8080/login |
+| **phpMyAdmin** (optional) | http://localhost:8081 |
+| **MySQL** (from your PC) | `127.0.0.1:3307` |
 
-### Database credentials (Docker)
+### Database (Docker MySQL)
 
-| Field | Value |
-|-------|--------|
-| Host (inside Docker) | `mysql` |
-| Host (from your PC) | `127.0.0.1` |
-| Port (from your PC) | `3307` |
+| | |
+|--|--|
+| Host (inside containers) | `mysql` |
+| Host (from Windows) | `127.0.0.1` |
+| Port | `3307` |
 | Database | `pets_db` |
 | User | `pets_user` |
 | Password | `pets_password` |
 
-## Useful commands
+## Commands
 
-```bash
-# View logs
-docker compose logs -f app
-
-# Stop everything
-docker compose down
-
-# Stop and remove database volume (fresh DB)
-docker compose down -v
-
-# Rebuild app image after code changes
-docker compose up --build -d app
+```powershell
+docker compose logs -f app    # app logs
+docker compose down           # stop
+docker compose down -v        # stop + delete database data
+docker compose up --build -d  # rebuild after code changes
 ```
 
-## Optional: custom ports / secrets
+## Services
 
-```bash
-cp .env.docker.example .env.docker
-# Edit .env.docker, then:
-docker compose --env-file .env.docker up --build -d
-```
-
-## What runs on startup
-
-The `app` container (`entrypoint.sh`):
-
-1. Writes `/app/.env` from environment variables
-2. Warms Symfony cache
-3. Waits for MySQL (via Compose healthcheck)
-4. Runs Doctrine migrations
-5. Starts PHP-FPM + Nginx on port **8080**
+| Container | Role |
+|-----------|------|
+| `app` | Symfony + Nginx + PHP (port **8080**) |
+| `mysql` | MySQL 8 database |
+| `phpmyadmin` | Web UI for MySQL (port **8081**) |
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| `overlayfs/snapshots ... no such file or directory` | Corrupted Docker cache. Run `.\docker-fix-build.ps1` or restart Docker Desktop, then `docker builder prune -af` and `docker compose build --no-cache app` |
-| Port 80 in use | Set `HTTP_PORT=8080` in `.env.docker` (app only on :8080) |
-| Port 8080 in use | Set `APP_PORT=8090` in `.env.docker` |
-| Build fails at `npm run build` | Ensure `package-lock.json` is committed; run `npm ci && npm run build` locally |
-| Database connection error | Run `docker compose ps` — `mysql` must be **healthy** before `app` starts |
-| Permission errors on uploads | `docker compose exec app chown -R www-data:www-data var public/uploads` |
+| Build cache error | `docker builder prune -af` then `docker compose build --no-cache app` |
+| Port 8080 in use | In `.env.docker`: `APP_PORT=8090` |
+| DB connection failed | `docker compose ps` — wait until `mysql` is **healthy** |
 
-## Production note
+## Cloud deploy
 
-This Compose file is for **local Docker deployment**. For cloud hosting, use [RAILWAY.md](RAILWAY.md).
+For Railway, see [RAILWAY.md](RAILWAY.md).
