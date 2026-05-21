@@ -20,10 +20,21 @@ RUN composer install \
     --prefer-dist
 
 COPY . .
+
+# Symfony post-install scripts need a readable .env (not shipped from host; see .dockerignore)
+RUN printf '%s\n' \
+    "APP_ENV=${APP_ENV}" \
+    "APP_DEBUG=${APP_DEBUG}" \
+    "APP_SECRET=${APP_SECRET}" \
+    "DATABASE_URL=${DATABASE_URL}" \
+    'TRUSTED_PROXIES=REMOTE_ADDR' \
+    > .env
+
 RUN composer install \
     --no-dev \
     --no-ansi \
     --no-interaction \
+    --no-scripts \
     --prefer-dist \
     --optimize-autoloader
 
