@@ -1,4 +1,31 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pet-pantry-app:latest
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: ${APP_SECRET:-pet_pantry_docker_change_this_secret_32chars}
+      DATABASE_URL: mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8080}
+      TRUSTED_PROXIES: REMOTE_ADDR
+      PORT: "8080"
+      MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
+      MAILER_DSN: null://null
+      CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - pets_network
+    volumes:
+      - uploads_data:/app/public/uploads
+
   mysql:
     image: mysql:8.0
     restart: unless-stopped
@@ -8,12 +35,18 @@ services:
       MYSQL_USER: pets_user
       MYSQL_PASSWORD: pets_password
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - pets_network
-  
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppets_root_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: unless-stopped
@@ -22,14 +55,16 @@ services:
       PMA_USER: pets_user
       PMA_PASSWORD: pets_password
     ports:
-      - "8080:80"
+      - "${PHPMYADMIN_PORT:-8081}:80"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - pets_network
 
 volumes:
   mysql_data:
+  uploads_data:
 
 networks:
   pets_network:

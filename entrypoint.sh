@@ -31,9 +31,9 @@ if [ -n "${DATABASE_URL:-}" ]; then
         echo "Running database migrations..."
         php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env="${APP_ENV:-prod}"
     else
-        echo "ERROR: Cannot connect to database. On the app service set:"
-        echo "  DATABASE_URL=\${{MySQL.MYSQL_URL}}"
-        echo "  (use your MySQL service name instead of MySQL if different)"
+        echo "ERROR: Cannot connect to database. Set DATABASE_URL, for example:"
+        echo "  Docker Compose: mysql://pets_user:pets_password@mysql:3306/pets_db?serverVersion=8.0&charset=utf8mb4"
+        echo "  Railway:        DATABASE_URL=\${{MySQL.MYSQL_URL}}"
         exit 1
     fi
 else
