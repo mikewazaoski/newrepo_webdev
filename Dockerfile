@@ -58,6 +58,9 @@ WORKDIR /app
 
 COPY --from=assets /app /app
 
+# Minimal .env for image build (composer/console); entrypoint.sh overwrites at runtime from Railway vars
+RUN printf 'APP_ENV=prod\nAPP_DEBUG=0\n' > .env
+
 RUN mkdir -p var/cache var/log public/uploads/images \
     && chown -R www-data:www-data var public/uploads
 
