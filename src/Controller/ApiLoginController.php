@@ -25,15 +25,6 @@ class ApiLoginController extends AbstractController
             return $this->json(['status' => 'error', 'message' => 'Invalid email or password'], 401);
         }
 
-        if (!$user->isVerified()) {
-            return $this->json([
-                'status' => 'error',
-                'message' => 'Email verification required',
-                'requiresVerification' => true,
-                'user' => $this->apiTokenService->serializeUser($user),
-            ], 403);
-        }
-
         $customer = $this->mobileCustomerService->getOrCreateForUser($user);
 
         return $this->json([

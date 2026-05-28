@@ -53,10 +53,8 @@ class RegistrationController extends AbstractController
             $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
 
 
-            // Generate verification token
-            $verificationToken = $emailVerificationService->generateVerificationToken();
-            $user->setVerificationToken($verificationToken);
-            $user->setIsVerified(false);
+            $user->setVerificationToken(null);
+            $user->setIsVerified(true);
 
             try {
                 $entityManager->persist($user);
@@ -72,19 +70,7 @@ class RegistrationController extends AbstractController
                 ]);
             }
 
-            $verificationUrl = $this->generateUrl(
-                'app_verify_email',
-                ['token' => $verificationToken],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            );
-
-            try {
-                $emailVerificationService->sendVerificationEmail($user, $verificationUrl);
-            } catch (\Throwable) {
-                // Account is saved; email is optional when MAILER_DSN is null://null
-            }
-
-            $this->addFlash('success', 'Registration successful! Please check your email to verify your account.');
+            $this->addFlash('success', 'Registration successful! You can sign in now.');
 
             return $this->redirectToRoute('app_login');
         }

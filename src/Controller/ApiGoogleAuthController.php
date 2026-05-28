@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
-use App\Service\EmailVerificationService;
 use App\Service\MobileCustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,7 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ApiGoogleAuthController extends AbstractController
@@ -23,8 +21,6 @@ class ApiGoogleAuthController extends AbstractController
         private UserRepository $userRepository,
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
-        private EmailVerificationService $emailVerificationService,
-        private UrlGeneratorInterface $urlGenerator,
         private ValidatorInterface $validator,
         private ApiTokenService $apiTokenService,
         private MobileCustomerService $mobileCustomerService,
@@ -61,8 +57,8 @@ class ApiGoogleAuthController extends AbstractController
             $user->setUsername($this->uniqueUsernameFromEmail($email));
             $user->setPassword($this->passwordHasher->hashPassword($user, bin2hex(random_bytes(32))));
             $user->setRoles(['ROLE_USER']);
-            $user->setIsVerified(false);
-            $user->setVerificationToken($this->emailVerificationService->generateVerificationToken());
+            $user->setIsVerified(true);
+            $user->setVerificationToken(null);
 
             $errors = $this->validator->validate($user);
             if (count($errors) > 0) {
@@ -76,23 +72,15 @@ class ApiGoogleAuthController extends AbstractController
 
             $this->entityManager->persist($user);
             $this->entityManager->flush();
-        } elseif ($name !== '' && ($user->getName() === null || $user->getName() === '')) {
-            $user->setName($name);
+        } else {
+            if (!$user->isVerified()) {
+                $user->setIsVerified(true);
+                $user->setVerificationToken(null);
+            }
+            if ($name !== '' && ($user->getName() === null || $user->getName() === '')) {
+                $user->setName($name);
+            }
             $this->entityManager->flush();
-        }
-
-        if (!$user->isVerified()) {
-            $this->sendVerificationEmail($user);
-
-            return new JsonResponse([
-                'requiresVerification' => true,
-                'isNewAccount' => $isNewAccount,
-                'message' => $isNewAccount
-                    ? 'Welcome! We created your account. Please verify your email before signing in.'
-                    : 'Please verify your email before signing in with Google.',
-                'email' => $user->getEmail(),
-                'user' => $this->apiTokenService->serializeUser($user),
-            ], Response::HTTP_OK);
         }
 
         $customer = $this->mobileCustomerService->getOrCreateForUser($user);
@@ -106,22 +94,6 @@ class ApiGoogleAuthController extends AbstractController
             'user' => $this->apiTokenService->serializeUser($user),
             'customer' => $this->mobileCustomerService->serialize($customer),
         ], Response::HTTP_OK);
-    }
-
-    private function sendVerificationEmail(User $user): void
-    {
-        if (!$user->getVerificationToken()) {
-            $user->setVerificationToken($this->emailVerificationService->generateVerificationToken());
-            $this->entityManager->flush();
-        }
-
-        $verificationUrl = $this->urlGenerator->generate(
-            'app_verify_email',
-            ['token' => $user->getVerificationToken()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-
-        $this->emailVerificationService->sendVerificationEmail($user, $verificationUrl);
     }
 
     private function uniqueUsernameFromEmail(string $email): string
