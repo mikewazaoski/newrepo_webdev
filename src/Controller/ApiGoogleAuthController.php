@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
 use App\Service\EmailVerificationService;
+use App\Service\MobileCustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,6 +27,7 @@ class ApiGoogleAuthController extends AbstractController
         private UrlGeneratorInterface $urlGenerator,
         private ValidatorInterface $validator,
         private ApiTokenService $apiTokenService,
+        private MobileCustomerService $mobileCustomerService,
     ) {}
 
     #[Route('/api/mobile/google-auth', name: 'api_mobile_google_auth', methods: ['POST'])]
@@ -93,12 +95,16 @@ class ApiGoogleAuthController extends AbstractController
             ], Response::HTTP_OK);
         }
 
+        $customer = $this->mobileCustomerService->getOrCreateForUser($user);
+
         return new JsonResponse([
+            'status' => 'success',
             'requiresVerification' => false,
-            'isNewAccount' => false,
+            'isNewAccount' => $isNewAccount,
             'message' => 'Signed in with Google',
             'token' => $this->apiTokenService->generateToken($user),
             'user' => $this->apiTokenService->serializeUser($user),
+            'customer' => $this->mobileCustomerService->serialize($customer),
         ], Response::HTTP_OK);
     }
 

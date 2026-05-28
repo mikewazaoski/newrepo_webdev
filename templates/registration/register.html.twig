@@ -328,6 +328,12 @@
             </div>
         {% endfor %}
 
+        {% if registrationError is defined and registrationError %}
+            <div class="alert alert-error">
+                {{ registrationError }}
+            </div>
+        {% endif %}
+
         {{ form_start(registrationForm, {'attr': {'class': 'register-form'}}) }}
             <div class="form-group">
                 {{ form_label(registrationForm.name) }}

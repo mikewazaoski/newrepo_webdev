@@ -14,7 +14,7 @@
 | `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` — replace `MySQL` with your MySQL service name |
 | `DEFAULT_URI` | `https://YOUR-APP.up.railway.app` (after generating a domain) |
 | `TRUSTED_PROXIES` | `REMOTE_ADDR` |
-| `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` |
+| `MESSENGER_TRANSPORT_DSN` | `sync://` |
 | `MAILER_DSN` | `null://null` (or your SMTP DSN) |
 
 4. **Networking** on the app service → **Generate Domain** → set `DEFAULT_URI` to that HTTPS URL.
@@ -23,7 +23,7 @@
 The container runs `bin/railway-env.php` on startup. It accepts any of:
 
 - `DATABASE_URL` (recommended: `${{MySQL.MYSQL_URL}}`)
-- `MYSQL_URL` (if you reference that directly)
+- `MYSQL_PRIVATE_URL` / `MYSQL_URL` / `MYSQL_PUBLIC_URL`
 - `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE` (auto-built URL)
 
 ## Linking MySQL to the app
@@ -35,13 +35,36 @@ In the app service **Variables** tab, use **Add variable reference**:
 
 Do **not** copy the raw URL by hand unless necessary — references stay in sync when Railway rotates credentials.
 
+**Delete** any old `DATABASE_URL` that contains `127.0.0.1`, `localhost`, or `@mysql:` — those only work in local Docker.
+
+## Verify after deploy
+
+Open:
+
+```
+https://YOUR-DOMAIN.up.railway.app/api/mobile/health
+```
+
+| Response | Meaning |
+|----------|---------|
+| `"database": "connected"` | Ready — login and registration work |
+| `"message": "DATABASE_URL is not configured"` | Add `DATABASE_URL=${{MySQL.MYSQL_URL}}` on the **app** service and redeploy |
+| `"database_url_set": true` but disconnected | MySQL service down, wrong URL, or check deploy logs for `Database OK for PHP-FPM` |
+
+In **Deploy logs** you should see:
+
+- `railway-env: wrote .env with DATABASE_URL for ...`
+- `Database OK for PHP-FPM`
+
+If you see `WARNING: No DATABASE_URL` or `Cannot connect to database`, fix variables and redeploy.
+
 ## Files used for deployment
 
 | File | Purpose |
 |------|---------|
 | `Dockerfile` | PHP 8.2, Nginx, Composer, Encore assets |
 | `entrypoint.sh` | Env resolution, cache, DB check, migrations |
-| `bin/railway-env.php` | Maps Railway MySQL vars → Symfony `DATABASE_URL` |
+| `bin/railway-env.php` | Maps Railway MySQL vars → Symfony `DATABASE_URL` + PHP-FPM env |
 | `docker/php-fpm/zz-railway.conf` | Passes env vars into PHP-FPM |
 | `railway.toml` | Dockerfile build, health check on `/`, port **8080** |
 
@@ -67,7 +90,12 @@ Product images in `public/uploads/images/` are lost on redeploy unless you add a
 ## Test after deploy
 
 - `https://YOUR-DOMAIN.up.railway.app/`
+- `https://YOUR-DOMAIN.up.railway.app/api/mobile/health`
 - `https://YOUR-DOMAIN.up.railway.app/api/mobile/products`
+
+## Mobile app (React Native)
+
+See **[MOBILE_API.md](MOBILE_API.md)** for all customer-facing JSON endpoints, auth flow, and fetch examples.
 
 ## Local Docker test
 

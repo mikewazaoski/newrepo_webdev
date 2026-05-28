@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
 use App\Service\EmailVerificationService;
+use App\Service\MobileCustomerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ class ApiEmailVerificationController extends AbstractController
         private EntityManagerInterface $entityManager,
         private UrlGeneratorInterface $urlGenerator,
         private ApiTokenService $apiTokenService,
+        private MobileCustomerService $mobileCustomerService,
     ) {}
 
     #[Route('/api/verify-email', name: 'api_verify_email', methods: ['POST'])]
@@ -39,11 +41,14 @@ class ApiEmailVerificationController extends AbstractController
             return new JsonResponse(['error' => 'Invalid or expired verification token'], Response::HTTP_BAD_REQUEST);
         }
 
+        $customer = $this->mobileCustomerService->getOrCreateForUser($user);
+
         return new JsonResponse([
-            'success' => true,
+            'status' => 'success',
             'message' => 'Email verified successfully. You can now use the app.',
             'token' => $this->apiTokenService->generateToken($user),
             'user' => $this->apiTokenService->serializeUser($user),
+            'customer' => $this->mobileCustomerService->serialize($customer),
         ], Response::HTTP_OK);
     }
 

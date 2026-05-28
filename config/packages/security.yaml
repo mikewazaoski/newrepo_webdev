@@ -65,7 +65,10 @@ security:
         - { path: ^/api/mobile/profile, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/products, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/categories, roles: PUBLIC_ACCESS }
-        - { path: ^/api/mobile/customer, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/contact, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/orders, roles: PUBLIC_ACCESS }
+        - { path: ^/api/mobile/payment-methods, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/mobile/google-auth, roles: PUBLIC_ACCESS }
         - { path: ^/about, roles: PUBLIC_ACCESS }
         - { path: ^/products, roles: PUBLIC_ACCESS }

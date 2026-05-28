@@ -18,11 +18,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Delete(),
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new Post(security: "is_granted('ROLE_ADMIN')"),
+        new Put(security: "is_granted('ROLE_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_ADMIN')"),
     ],
     normalizationContext: ['groups' => ['customer:read']],
     denormalizationContext: ['groups' => ['customer:write']]
@@ -60,6 +60,12 @@ class Customer
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $createdBy = null;
+
+    /** Mobile app account linked to this customer record. */
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'account_user_id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['customer:read'])]
+    private ?User $accountUser = null;
 
     public function __construct()
     {
@@ -169,6 +175,18 @@ class Customer
     public function setCreatedBy(?User $createdBy): static
     {
         $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getAccountUser(): ?User
+    {
+        return $this->accountUser;
+    }
+
+    public function setAccountUser(?User $accountUser): static
+    {
+        $this->accountUser = $accountUser;
 
         return $this;
     }

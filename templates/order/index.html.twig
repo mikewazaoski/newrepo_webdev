@@ -549,6 +549,11 @@
     
     <script>
         $(document).ready(function() {
+            const tableElement = document.getElementById('ordersTable');
+            if (!tableElement) {
+                return;
+            }
+
             $('#ordersTable').DataTable({
                 responsive: true,
                 pageLength: 10,
@@ -576,6 +581,39 @@
                     console.log('DataTable initialized successfully');
                 }
             });
+
+            let latestOrderId = {{ latestOrderId|default(0) }};
+            let totalOrders = {{ totalOrders|default(0) }};
+
+            // Poll for newly created orders and refresh only when needed.
+            setInterval(async function() {
+                if (document.hidden) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('{{ path('app_order_updates') }}', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    const hasNewOrder =
+                        Number(payload.latestOrderId || 0) > Number(latestOrderId || 0)
+                        || Number(payload.totalOrders || 0) > Number(totalOrders || 0);
+
+                    if (hasNewOrder) {
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    // Keep page usable even if polling fails.
+                }
+            }, 5000);
         });
     </script>
 {% endblock %}

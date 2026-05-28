@@ -2,15 +2,15 @@
 
 namespace App\Controller;
 
-use App\Entity\Customer;
+use App\Controller\Trait\ResolvesMobileUserTrait;
 use App\Entity\Order;
 use App\Entity\Product;
 use App\Entity\User;
-use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
+use App\Service\MobileCustomerService;
 use App\Service\MobilePaymentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,20 +22,23 @@ use Symfony\Component\Uid\Uuid;
 
 class ApiMobileOrderController extends AbstractController
 {
+    use ResolvesMobileUserTrait;
+
     public function __construct(
         private ApiTokenService $apiTokenService,
         private UserRepository $userRepository,
-        private CustomerRepository $customerRepository,
+        private MobileCustomerService $mobileCustomerService,
         private ProductRepository $productRepository,
         private OrderRepository $orderRepository,
         private EntityManagerInterface $entityManager,
         private MobilePaymentService $mobilePaymentService,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/mobile/orders', name: 'api_mobile_orders_list', methods: ['GET'])]
     public function listOrders(Request $request): JsonResponse
     {
-        $user = $this->resolveUser($request);
+        $user = $this->resolveMobileUser($request, $this->apiTokenService, $this->userRepository);
         if (!$user instanceof User) {
             return $user;
         }
@@ -65,7 +68,6 @@ class ApiMobileOrderController extends AbstractController
             $lineTotal = (float) $order->getQuantity() * (float) $order->getPrice();
             $grouped[$ref]['total'] += $lineTotal;
             $grouped[$ref]['items'][] = $this->serializeOrderLine($order);
-            // Use most restrictive status across lines (pending wins over shipped)
             if ($order->getStatus() === 'pending') {
                 $grouped[$ref]['status'] = 'pending';
             } elseif ($order->getStatus() === 'cancelled' && $grouped[$ref]['status'] !== 'pending') {
@@ -73,8 +75,7 @@ class ApiMobileOrderController extends AbstractController
             }
         }
 
-        return new JsonResponse([
-            'status' => 'success',
+        return $this->mobileJsonSuccess([
             'data' => array_values($grouped),
             'count' => count($grouped),
         ]);
@@ -83,22 +84,22 @@ class ApiMobileOrderController extends AbstractController
     #[Route('/api/mobile/orders', name: 'api_mobile_orders_create', methods: ['POST'])]
     public function createOrder(Request $request): JsonResponse
     {
-        $user = $this->resolveUser($request);
+        $user = $this->resolveMobileUser($request, $this->apiTokenService, $this->userRepository);
         if (!$user instanceof User) {
             return $user;
         }
 
         $data = json_decode($request->getContent(), true);
         if (!\is_array($data) || !isset($data['items']) || !\is_array($data['items']) || $data['items'] === []) {
-            return new JsonResponse(['error' => 'Cart items are required'], Response::HTTP_BAD_REQUEST);
+            return $this->mobileJsonError('Cart items are required');
         }
 
         $paymentMethod = isset($data['paymentMethod']) ? trim((string) $data['paymentMethod']) : MobilePaymentService::METHOD_COD;
         if ($paymentMethod !== MobilePaymentService::METHOD_COD) {
-            return new JsonResponse(['error' => 'Only cash on delivery is accepted'], Response::HTTP_BAD_REQUEST);
+            return $this->mobileJsonError('Only cash on delivery is accepted');
         }
 
-        $customer = $this->resolveCustomerForUser($user);
+        $customer = $this->mobileCustomerService->getOrCreateForUser($user);
         $orderRef = Uuid::v4()->toRfc4122();
         $created = [];
         $runningTotal = 0.0;
@@ -110,22 +111,20 @@ class ApiMobileOrderController extends AbstractController
             $productId = isset($row['productId']) ? (int) $row['productId'] : 0;
             $quantity = isset($row['quantity']) ? (int) $row['quantity'] : 0;
             if ($productId <= 0 || $quantity <= 0) {
-                return new JsonResponse(['error' => 'Each item needs productId and quantity'], Response::HTTP_BAD_REQUEST);
+                return $this->mobileJsonError('Each item needs productId and quantity');
             }
 
             $product = $this->productRepository->find($productId);
             if (!$product instanceof Product) {
-                return new JsonResponse(['error' => 'Product not found: ' . $productId], Response::HTTP_NOT_FOUND);
+                return $this->mobileJsonError('Product not found: ' . $productId, Response::HTTP_NOT_FOUND);
             }
 
             if ($product->getStock() < $quantity) {
-                return new JsonResponse([
-                    'error' => sprintf(
-                        'Not enough stock for "%s" (available: %d)',
-                        $product->getName(),
-                        $product->getStock()
-                    ),
-                ], Response::HTTP_BAD_REQUEST);
+                return $this->mobileJsonError(sprintf(
+                    'Not enough stock for "%s" (available: %d)',
+                    $product->getName(),
+                    $product->getStock()
+                ));
             }
 
             $order = new Order();
@@ -146,13 +145,13 @@ class ApiMobileOrderController extends AbstractController
         }
 
         if ($created === []) {
-            return new JsonResponse(['error' => 'No valid items in order'], Response::HTTP_BAD_REQUEST);
+            return $this->mobileJsonError('No valid items in order');
         }
 
         try {
             $payment = $this->mobilePaymentService->resolvePayment($paymentMethod, $runningTotal);
         } catch (\InvalidArgumentException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            return $this->mobileJsonError($e->getMessage());
         }
 
         foreach ($created as $order) {
@@ -168,8 +167,7 @@ class ApiMobileOrderController extends AbstractController
             $total += (float) $order->getQuantity() * (float) $order->getPrice();
         }
 
-        return new JsonResponse([
-            'status' => 'success',
+        return $this->mobileJsonSuccess([
             'message' => 'Order placed! Pay with cash on delivery. Waiting for approval before shipping.',
             'orderRef' => $orderRef,
             'orderStatus' => 'pending',
@@ -180,51 +178,6 @@ class ApiMobileOrderController extends AbstractController
             'paidAt' => $payment['paidAt']?->format(\DateTimeInterface::ATOM),
             'items' => $lines,
         ], Response::HTTP_CREATED);
-    }
-
-    private function resolveUser(Request $request): User|JsonResponse
-    {
-        $header = $request->headers->get('Authorization', '');
-        if (!preg_match('/^Bearer\s+(.+)$/i', $header, $matches)) {
-            return new JsonResponse(['error' => 'Authentication token required'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $payload = $this->apiTokenService->decodeToken($matches[1]);
-        if (!$payload) {
-            return new JsonResponse(['error' => 'Invalid or expired token'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $user = $this->userRepository->find($payload['user_id']);
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        return $user;
-    }
-
-    private function resolveCustomerForUser(User $user): Customer
-    {
-        $customer = $this->customerRepository->findOneBy(['email' => $user->getEmail()]);
-        if ($customer instanceof Customer) {
-            return $customer;
-        }
-
-        $username = $user->getUsername() ?? ('mobile_' . $user->getId());
-        $existingUsername = $this->customerRepository->findOneBy(['username' => $username]);
-        if ($existingUsername instanceof Customer) {
-            $username = $username . '_' . $user->getId();
-        }
-
-        $customer = new Customer();
-        $customer->setEmail($user->getEmail());
-        $customer->setName($user->getName() ?? $user->getEmail());
-        $customer->setCustomerName($user->getName() ?? 'Mobile customer');
-        $customer->setUsername($username);
-        $customer->setCreatedBy($user);
-        $this->entityManager->persist($customer);
-        $this->entityManager->flush();
-
-        return $customer;
     }
 
     private function serializeOrderLine(Order $order): array

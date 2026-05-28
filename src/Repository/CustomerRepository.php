@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Customer;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,5 +17,13 @@ class CustomerRepository extends ServiceEntityRepository
         parent::__construct($registry, Customer::class);
     }
 
-    // Add your custom repository methods here
+    public function findOneByAccountUser(User $user): ?Customer
+    {
+        return $this->findOneBy(['accountUser' => $user]);
+    }
+
+    public function findOneByEmail(string $email): ?Customer
+    {
+        return $this->findOneBy(['email' => $email]);
+    }
 }

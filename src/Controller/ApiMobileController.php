@@ -2,10 +2,13 @@
 
 namespace App\Controller;
 
+use App\Controller\Trait\ResolvesMobileUserTrait;
+use App\Entity\User;
 use App\Repository\ProductRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
+use App\Service\MobileCustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +19,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ApiMobileController extends AbstractController
 {
+    use ResolvesMobileUserTrait;
+
     public function __construct(
         private ProductRepository $productRepository,
         private CategoryRepository $categoryRepository,
@@ -23,7 +28,9 @@ class ApiMobileController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ValidatorInterface $validator,
         private ApiTokenService $apiTokenService,
-    ) {}
+        private MobileCustomerService $mobileCustomerService,
+    ) {
+    }
 
     #[Route('/api/mobile/health', name: 'api_mobile_health', methods: ['GET'])]
     public function health(): JsonResponse
@@ -76,52 +83,49 @@ class ApiMobileController extends AbstractController
     #[Route('/api/mobile/profile', name: 'api_mobile_profile', methods: ['GET'])]
     public function profile(Request $request): JsonResponse
     {
-        $token = $this->extractBearerToken($request);
-        if (!$token) {
-            return new JsonResponse(['status' => 'error', 'message' => 'Authentication token required'], Response::HTTP_UNAUTHORIZED);
+        $user = $this->resolveMobileUser($request, $this->apiTokenService, $this->userRepository);
+        if (!$user instanceof User) {
+            return $user;
         }
 
-        $payload = $this->apiTokenService->decodeToken($token);
-        if (!$payload) {
-            return new JsonResponse(['status' => 'error', 'message' => 'Invalid or expired token'], Response::HTTP_UNAUTHORIZED);
-        }
+        $customer = $this->mobileCustomerService->findForUser($user);
+        $customerData = $customer ? $this->mobileCustomerService->serialize($customer) : null;
 
-        $user = $this->userRepository->find($payload['user_id']);
-        if (!$user) {
-            return new JsonResponse(['status' => 'error', 'message' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        return new JsonResponse([
-            'status' => 'success',
-            'data' => $this->apiTokenService->serializeUser($user),
-        ], Response::HTTP_OK);
+        return $this->mobileJsonSuccess([
+            'data' => [
+                'user' => $this->apiTokenService->serializeUser($user),
+                'customer' => $customerData,
+            ],
+        ]);
     }
 
     #[Route('/api/mobile/products', name: 'api_mobile_products', methods: ['GET'])]
-    public function getProducts(): JsonResponse
+    public function getProducts(Request $request): JsonResponse
     {
         $products = $this->productRepository->findBy([], ['name' => 'ASC']);
+        $baseUrl = $request->getSchemeAndHttpHost();
 
-        $data = array_map(function ($product) {
+        $data = array_map(function ($product) use ($baseUrl) {
             $category = $product->getCategory();
+            $image = $product->getImage();
 
             return [
                 'id' => $product->getId(),
                 'name' => $product->getName(),
                 'price' => $product->getPrice(),
                 'description' => $product->getDescription(),
-                'image' => $product->getImage(),
+                'image' => $image,
+                'imageUrl' => $image ? $baseUrl . '/uploads/images/' . $image : null,
                 'stock' => $product->getStock(),
                 'category' => $category ? $category->getName() : null,
                 'category_id' => $category ? $category->getId() : null,
             ];
         }, $products);
 
-        return new JsonResponse([
-            'status' => 'success',
+        return $this->mobileJsonSuccess([
             'data' => $data,
             'count' => count($data),
-        ], Response::HTTP_OK);
+        ]);
     }
 
     #[Route('/api/mobile/categories', name: 'api_mobile_categories', methods: ['GET'])]
@@ -137,60 +141,35 @@ class ApiMobileController extends AbstractController
             ];
         }, $categories);
 
-        return new JsonResponse([
-            'status' => 'success',
+        return $this->mobileJsonSuccess([
             'data' => $data,
             'count' => count($data),
-        ], Response::HTTP_OK);
+        ]);
     }
 
-    #[Route('/api/mobile/customer', name: 'api_mobile_customer', methods: ['GET', 'POST'])]
-    public function submitCustomer(Request $request): JsonResponse
+    /** Public contact form (not customer CRUD). */
+    #[Route('/api/mobile/contact', name: 'api_mobile_contact', methods: ['POST'])]
+    public function contact(Request $request): JsonResponse
     {
-        if ($request->isMethod('GET')) {
-            $data = [
-                'name' => $request->query->get('name'),
-                'email' => $request->query->get('email'),
-                'message' => $request->query->get('message'),
-            ];
-        } else {
-            $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true);
+        if (!\is_array($data)) {
+            return $this->mobileJsonError('Invalid JSON body');
         }
 
-        if (!isset($data['name']) || !isset($data['email']) || !isset($data['message'])) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Name, email, and message are required',
-            ], Response::HTTP_BAD_REQUEST);
+        if (!isset($data['name'], $data['email'], $data['message'])) {
+            return $this->mobileJsonError('Name, email, and message are required');
         }
 
-        if (empty(trim($data['name'])) || empty(trim($data['email'])) || empty(trim($data['message']))) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'All fields must be filled',
-            ], Response::HTTP_BAD_REQUEST);
+        if (empty(trim((string) $data['name'])) || empty(trim((string) $data['email'])) || empty(trim((string) $data['message']))) {
+            return $this->mobileJsonError('All fields must be filled');
         }
 
-        if (!filter_var(trim($data['email']), FILTER_VALIDATE_EMAIL)) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Please enter a valid email address',
-            ], Response::HTTP_BAD_REQUEST);
+        if (!filter_var(trim((string) $data['email']), FILTER_VALIDATE_EMAIL)) {
+            return $this->mobileJsonError('Please enter a valid email address');
         }
 
-        return new JsonResponse([
-            'status' => 'success',
+        return $this->mobileJsonSuccess([
             'message' => 'Thanks! We received your message and will reply within 24 hours on business days.',
-        ], Response::HTTP_OK);
-    }
-
-    private function extractBearerToken(Request $request): ?string
-    {
-        $header = $request->headers->get('Authorization', '');
-        if (preg_match('/^Bearer\s+(.+)$/i', $header, $matches)) {
-            return $matches[1];
-        }
-
-        return null;
+        ]);
     }
 }

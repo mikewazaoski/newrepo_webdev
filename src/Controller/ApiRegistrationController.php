@@ -88,15 +88,16 @@ class ApiRegistrationController extends AbstractController
         $this->emailVerificationService->sendVerificationEmail($user, $verificationUrl);
 
         return new JsonResponse([
-            'success' => true,
+            'status' => 'success',
             'message' => 'Registration successful. Please check your email to verify your account.',
+            'requiresVerification' => true,
             'user' => [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
                 'name' => $user->getName(),
-                'isVerified' => $user->isVerified()
-            ]
+                'isVerified' => $user->isVerified(),
+            ],
         ], Response::HTTP_CREATED);
     }
 }

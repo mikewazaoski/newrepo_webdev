@@ -14,6 +14,7 @@ use App\Service\ActivityLogService;
 use App\Service\MobilePaymentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,9 +29,23 @@ final class OrderController extends AbstractController
     {
         // Both staff and admins can see all orders
         $orders = $orderRepository->findAll();
+        $latestOrder = $orderRepository->findOneBy([], ['id' => 'DESC']);
 
         return $this->render('order/index.html.twig', [
             'orders' => $orders,
+            'latestOrderId' => $latestOrder?->getId() ?? 0,
+            'totalOrders' => count($orders),
+        ]);
+    }
+
+    #[Route('/updates', name: 'app_order_updates', methods: ['GET'])]
+    public function updates(OrderRepository $orderRepository): JsonResponse
+    {
+        $latestOrder = $orderRepository->findOneBy([], ['id' => 'DESC']);
+
+        return new JsonResponse([
+            'latestOrderId' => $latestOrder?->getId() ?? 0,
+            'totalOrders' => $orderRepository->count([]),
         ]);
     }
 
