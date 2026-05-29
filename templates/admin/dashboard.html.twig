@@ -362,7 +362,7 @@
                     <i class="fas fa-box"></i>
                 </div>
             </div>
-            <div class="stat-value">{{ total_products|default('0') }}</div>
+            <div class="stat-value" id="stat-total-products">{{ total_products|default('0') }}</div>
             <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
                 <span>12% from last month</span>
@@ -376,7 +376,7 @@
                     <i class="fas fa-shopping-cart"></i>
                 </div>
             </div>
-            <div class="stat-value">{{ total_orders|default('0') }}</div>
+            <div class="stat-value" id="stat-total-orders">{{ total_orders|default('0') }}</div>
             <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
                 <span>8% from last month</span>
@@ -390,7 +390,7 @@
                     <i class="fas fa-user-friends"></i>
                 </div>
             </div>
-            <div class="stat-value">{{ total_customers|default('0') }}</div>
+            <div class="stat-value" id="stat-total-customers">{{ total_customers|default('0') }}</div>
             <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
                 <span>5% from last month</span>
@@ -404,7 +404,7 @@
                     <i class="fas fa-dollar-sign"></i>
                 </div>
             </div>
-            <div class="stat-value">₱{{ total_revenue|default('0')|number_format(2) }}</div>
+            <div class="stat-value" id="stat-total-revenue">₱{{ total_revenue|default('0')|number_format(2) }}</div>
             <div class="stat-change positive">
                 <i class="fas fa-arrow-up"></i>
                 <span>15% from last month</span>
@@ -553,7 +553,6 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Minimal chart colors
         const chartColors = {
             primary: '#1a1a1a',
             secondary: '#666',
@@ -561,31 +560,141 @@
             grid: '#e5e5e5'
         };
 
-        // Sales Chart (Line Chart)
-        const salesCtx = document.getElementById('salesChart');
-        if (salesCtx) {
-            // Prepare sales data
+        let latestOrderId = {{ latest_order_id|default(0) }};
+        let latestCustomerId = {{ latest_customer_id|default(0) }};
+        let totalOrders = {{ total_orders|default(0) }};
+        let totalCustomers = {{ total_customers|default(0) }};
+        let totalProducts = {{ total_products|default(0) }};
+        let totalRevenue = {{ total_revenue|default(0) }};
+
+        const dashboardCharts = {
+            sales: null,
+            category: null,
+            revenue: null,
+        };
+
+        function formatRevenue(value) {
+            const amount = Number(value) || 0;
+            return '₱' + amount.toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+        }
+
+        function buildSalesSeries(dailySales) {
             const salesLabels = [];
             const salesData = [];
-            const dailySales = {{ daily_sales|json_encode|raw }};
 
-            // Get last 7 days
             for (let i = 6; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 const dateStr = date.toISOString().split('T')[0];
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                salesLabels.push(dayName);
-                salesData.push(dailySales[dateStr] || 0);
+                salesLabels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+                salesData.push(Number(dailySales[dateStr] || 0));
             }
 
-            new Chart(salesCtx, {
+            return { salesLabels, salesData };
+        }
+
+        function buildRevenueSeries(monthlyRevenue) {
+            const revenueLabels = [];
+            const revenueData = [];
+
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+                revenueLabels.push(monthName + ' ' + year);
+                const found = monthlyRevenue.find(item => item.year === year && item.month === month);
+                revenueData.push(found ? Number(found.total) : 0);
+            }
+
+            return { revenueLabels, revenueData };
+        }
+
+        function updateDashboardStats(payload) {
+            document.getElementById('stat-total-products').textContent = String(payload.total_products ?? 0);
+            document.getElementById('stat-total-orders').textContent = String(payload.total_orders ?? 0);
+            document.getElementById('stat-total-customers').textContent = String(payload.total_customers ?? 0);
+            document.getElementById('stat-total-revenue').textContent = formatRevenue(payload.total_revenue ?? 0);
+
+            if (dashboardCharts.sales) {
+                const salesSeries = buildSalesSeries(payload.daily_sales || {});
+                dashboardCharts.sales.data.labels = salesSeries.salesLabels;
+                dashboardCharts.sales.data.datasets[0].data = salesSeries.salesData;
+                dashboardCharts.sales.update('none');
+            }
+
+            if (dashboardCharts.category && Array.isArray(payload.category_distribution)) {
+                const labels = payload.category_distribution.map(item => item.category || 'Uncategorized');
+                const values = payload.category_distribution.map(item => Number(item.count || 0));
+                dashboardCharts.category.data.labels = labels.length > 0 ? labels : ['No Data'];
+                dashboardCharts.category.data.datasets[0].data = values.length > 0 ? values : [1];
+                dashboardCharts.category.update('none');
+            }
+
+            if (dashboardCharts.revenue) {
+                const revenueSeries = buildRevenueSeries(payload.monthly_revenue || []);
+                dashboardCharts.revenue.data.labels = revenueSeries.revenueLabels;
+                dashboardCharts.revenue.data.datasets[0].data = revenueSeries.revenueData;
+                dashboardCharts.revenue.update('none');
+            }
+        }
+
+        function hasDashboardChanges(payload) {
+            return Number(payload.latest_order_id || 0) > Number(latestOrderId || 0)
+                || Number(payload.latest_customer_id || 0) > Number(latestCustomerId || 0)
+                || Number(payload.total_orders || 0) !== Number(totalOrders || 0)
+                || Number(payload.total_customers || 0) !== Number(totalCustomers || 0)
+                || Number(payload.total_products || 0) !== Number(totalProducts || 0)
+                || Number(payload.total_revenue || 0) !== Number(totalRevenue || 0);
+        }
+
+        async function pollDashboardUpdates() {
+            if (document.hidden) {
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ path('app_admin_dashboard_updates') }}', {
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const payload = await response.json();
+                if (!hasDashboardChanges(payload)) {
+                    return;
+                }
+
+                latestOrderId = payload.latest_order_id ?? latestOrderId;
+                latestCustomerId = payload.latest_customer_id ?? latestCustomerId;
+                totalOrders = payload.total_orders ?? totalOrders;
+                totalCustomers = payload.total_customers ?? totalCustomers;
+                totalProducts = payload.total_products ?? totalProducts;
+                totalRevenue = payload.total_revenue ?? totalRevenue;
+                updateDashboardStats(payload);
+            } catch (error) {
+                // Ignore polling errors to keep dashboard usable.
+            }
+        }
+
+        const salesCtx = document.getElementById('salesChart');
+        if (salesCtx) {
+            const dailySales = {{ daily_sales|json_encode|raw }};
+            const salesSeries = buildSalesSeries(dailySales);
+
+            dashboardCharts.sales = new Chart(salesCtx, {
                 type: 'line',
                 data: {
-                    labels: salesLabels,
+                    labels: salesSeries.salesLabels,
                     datasets: [{
                         label: 'Sales',
-                        data: salesData,
+                        data: salesSeries.salesData,
                         borderColor: chartColors.primary,
                         backgroundColor: 'rgba(26, 26, 26, 0.05)',
                         tension: 0.4,
@@ -653,7 +762,7 @@
                 '#2d3748', '#4a5568', '#718096', '#a0aec0', '#cbd5e0'
             ];
 
-            new Chart(categoryCtx, {
+            dashboardCharts.category = new Chart(categoryCtx, {
                 type: 'doughnut',
                 data: {
                     labels: categoryLabels.length > 0 ? categoryLabels : ['No Data'],
@@ -687,32 +796,16 @@
         const revenueCtx = document.getElementById('revenueChart');
         if (revenueCtx) {
             // Prepare revenue data
-            const revenueLabels = [];
-            const revenueData = [];
             const monthlyRevenue = {{ monthly_revenue|json_encode|raw }};
+            const revenueSeries = buildRevenueSeries(monthlyRevenue);
 
-            // Get last 6 months
-            for (let i = 5; i >= 0; i--) {
-                const date = new Date();
-                date.setMonth(date.getMonth() - i);
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1;
-                const key = year + '-' + (month < 10 ? '0' + month : month);
-                const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-                const label = monthName + ' ' + year;
-
-                revenueLabels.push(label);
-                const found = monthlyRevenue.find(item => item.year === year && item.month === month);
-                revenueData.push(found ? found.total : 0);
-            }
-
-            new Chart(revenueCtx, {
+            dashboardCharts.revenue = new Chart(revenueCtx, {
                 type: 'bar',
                 data: {
-                    labels: revenueLabels,
+                    labels: revenueSeries.revenueLabels,
                     datasets: [{
                         label: 'Revenue (₱)',
-                        data: revenueData,
+                        data: revenueSeries.revenueData,
                         backgroundColor: chartColors.primary,
                         borderColor: chartColors.primary,
                         borderWidth: 0,
@@ -760,6 +853,8 @@
                 }
             });
         }
+
+        setInterval(pollDashboardUpdates, 5000);
     });
 </script>
 {% endblock %}
